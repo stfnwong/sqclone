@@ -43,6 +43,7 @@ $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 #	$(CC) $(CFLAGS) -S $< -o $(OBJ_DIR)/$@.asm -masm=$(ASM_STYLE)
 
 # =============== PROGRAMS 
+PROGRAMS=repl
 PROGRAM_SOURCES := $(wildcard $(PROGRAM_DIR)/*.c)
 PROGRAM_OBJECTS := $(PROGRAM_SOURCES:$(PROGRAM_DIR)/%.c=$(OBJ_DIR)/%.o)
 
@@ -53,7 +54,6 @@ $(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/$@ $(LIBS) $(TEST_LIBS)
 
-PROGRAMS=repl
 
 # =============== TESTS 
 TESTS=test_table

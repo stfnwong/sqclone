@@ -61,6 +61,7 @@ void deserialize_row(void* src, Row* dst);
 typedef struct 
 {
     uint32_t num_rows;
+    uint32_t max_rows;
     void* pages[TABLE_MAX_PAGES];
 } Table;
 

@@ -71,6 +71,7 @@ Table* new_table(void)
     Table* table = malloc(sizeof(Table));
     if(!table)
         return NULL;
+    table->max_rows = TABLE_MAX_ROWS;
 
     for(uint32_t i = 0; i < TABLE_MAX_PAGES; ++i)
     {

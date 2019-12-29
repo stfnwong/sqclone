@@ -32,7 +32,7 @@ INCS=-I$(SRC_DIR)
 # Sources
 SOURCES=$(wildcard $(SRC_DIR)/*.c)
 # Unit test sources 
-TEST_SOURCES=$(wildcard test/*.c)	# issue here with directory name..
+TEST_SOURCES=$(wildcard $(TEST_DIR)/*.c)	# issue here with directory name..
 
 # Objects 
 OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -40,12 +40,25 @@ $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Target to generate assembler output
-$(ASSEM_OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -S $< -o $(OBJ_DIR)/$@.asm -masm=$(ASM_STYLE)
+#$(ASSEM_OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
+#	$(CC) $(CFLAGS) -S $< -o $(OBJ_DIR)/$@.asm -masm=$(ASM_STYLE)
+
+# =============== PROGRAMS 
+PROGRAM_SOURCES = $(wildcard $(PROGRAM_DIR)/*.c)
+PROGRAM_OBJECTS := $(PROGRAM_SOURCES:$(PROGRAM_DIR)/%.c=$(OBJ_DIR)/%.o)
+
+$(PROGRAM_OBJECTS): $(OBJ_DIR)/%.o : $(PROGRAM_DIR)/%.c
+	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
+
+$(PROGRAMS): $(PROGRAM_OBJECTS) $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
+		-o bin/$@ $(LIBS) $(TEST_LIBS)
+
+PROGRAMS = repl
 
 # =============== TESTS 
-TEST_OBJECTS  := $(TEST_SOURCES:test/%.c=$(OBJ_DIR)/%.o)
-$(TEST_OBJECTS): $(OBJ_DIR)/%.o : test/%.c 
+TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.c=$(OBJ_DIR)/%.o)
+$(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.c 
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
 # Unit test targets 
@@ -59,11 +72,13 @@ $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 # ======== REAL TARGETS ========== #
 .PHONY: clean
 
-all : test 
+all : program test 
 
 test : $(OBJECTS) $(TESTS)
 	
 obj: $(OBJECTS)
+
+program: $(OBJECTS) $(PROGRAMS)
 
 
 clean:

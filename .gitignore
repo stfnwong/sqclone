@@ -1,0 +1,4 @@
+# Ignore swap files 
+*.swp
+# Ignore object files 
+*.o

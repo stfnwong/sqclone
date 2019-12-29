@@ -26,14 +26,12 @@ CFLAGS = -Wall -std=c99 -D_REENTRANT -pthread $(OPT)
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS=
 LIBS=
-TEST_LIBS=
-#TEST_LIBS=-lcheck
+TEST_LIBS=-lcheck
 
 INCS=-I$(SRC_DIR)
 # Sources
 SOURCES=$(wildcard $(SRC_DIR)/*.c)
 # Unit test sources 
-TEST_SOURCES=$(wildcard $(TEST_DIR)/*.c)	
 
 # Objects 
 OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -58,8 +56,10 @@ $(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS)
 PROGRAMS=repl
 
 # =============== TESTS 
-TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.c=$(OBJ_DIR)/%.o)
-$(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.c 
+TEST_SOURCES=$(wildcard test/*.c)	
+TEST_OBJECTS  := $(TEST_SOURCES:test/%.c=$(OBJ_DIR)/%.o)
+
+$(TEST_OBJECTS): $(OBJ_DIR)/%.o : test/%.c 
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
 # Unit test targets 
@@ -67,15 +67,15 @@ $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/test/$@ $(LIBS) $(TEST_LIBS)
 
-TESTS=
+TESTS=test_table
 
 
 # ======== REAL TARGETS ========== #
 .PHONY: clean
 
-all : programs test 
+all : programs tests 
 
-test : $(OBJECTS) $(TESTS)
+tests : $(OBJECTS) $(TESTS)
 	
 obj: $(OBJECTS)
 

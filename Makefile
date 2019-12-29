@@ -32,7 +32,7 @@ INCS=-I$(SRC_DIR)
 # Sources
 SOURCES=$(wildcard $(SRC_DIR)/*.c)
 # Unit test sources 
-TEST_SOURCES=$(wildcard $(TEST_DIR)/*.c)	# issue here with directory name..
+TEST_SOURCES=$(wildcard $(TEST_DIR)/*.c)	
 
 # Objects 
 OBJECTS := $(SOURCES:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -44,17 +44,17 @@ $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 #	$(CC) $(CFLAGS) -S $< -o $(OBJ_DIR)/$@.asm -masm=$(ASM_STYLE)
 
 # =============== PROGRAMS 
-PROGRAM_SOURCES = $(wildcard $(PROGRAM_DIR)/*.c)
+PROGRAM_SOURCES := $(wildcard $(PROGRAM_DIR)/*.c)
 PROGRAM_OBJECTS := $(PROGRAM_SOURCES:$(PROGRAM_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 $(PROGRAM_OBJECTS): $(OBJ_DIR)/%.o : $(PROGRAM_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
-$(PROGRAMS): $(PROGRAM_OBJECTS) $(OBJECTS)
+$(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS) 
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/$@ $(LIBS) $(TEST_LIBS)
 
-PROGRAMS = repl
+PROGRAMS=repl
 
 # =============== TESTS 
 TEST_OBJECTS  := $(TEST_SOURCES:$(TEST_DIR)/%.c=$(OBJ_DIR)/%.o)
@@ -62,23 +62,23 @@ $(TEST_OBJECTS): $(OBJ_DIR)/%.o : $(TEST_DIR)/%.c
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
 # Unit test targets 
-TESTS = 
-
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/test/$@ $(LIBS) $(TEST_LIBS)
+
+TESTS = 
 
 
 # ======== REAL TARGETS ========== #
 .PHONY: clean
 
-all : program test 
+all : programs test 
 
 test : $(OBJECTS) $(TESTS)
 	
 obj: $(OBJECTS)
 
-program: $(OBJECTS) $(PROGRAMS)
+programs: $(PROGRAMS)
 
 
 clean:

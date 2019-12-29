@@ -10,7 +10,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
 // Input buffer structure
 typedef struct 
 {
@@ -19,8 +18,9 @@ typedef struct
     ssize_t input_length;
 } InputBuffer;
 
-// Methods for working with an InputBuffer
-
+/*
+ * new_input_buffer()
+ */
 InputBuffer* new_input_buffer(void)
 {
     InputBuffer* input_buffer = malloc(sizeof(InputBuffer));
@@ -36,6 +36,89 @@ InputBuffer* new_input_buffer(void)
 
     return input_buffer;
 }
+
+// Metacommand stuff 
+typedef enum
+{
+    META_COMMAND_SUCCESS,
+    META_COMMAND_UNRECOGNIZED_COMMAND
+} MetaCommandResult;
+
+typedef enum 
+{
+    PREPARE_SUCCESS,
+    PREPARE_UNRECOGNIZED_STATEMENT
+} PrepareResult;
+
+
+/*
+ * do_meta_command()
+ * Handle metacommands here
+ */
+MetaCommandResult do_meta_command(InputBuffer* input_buffer)
+{
+    if(strncmp(input_buffer->buffer, ".exit", 6) == 0)
+    {
+        exit(EXIT_SUCCESS);
+    }
+    else
+        return META_COMMAND_UNRECOGNIZED_COMMAND;
+}
+
+// Statement stuff 
+typedef enum
+{
+    STATEMENT_INSERT,
+    STATEMENT_SELECT
+} StatementType;
+
+typedef struct
+{
+    StatementType type;
+} Statement;
+
+/*
+ * prepare_statement()
+ */
+PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
+{
+    if(strncmp(input_buffer->buffer, "insert", 6) == 0)
+    {
+        statement->type = STATEMENT_INSERT;
+        return PREPARE_SUCCESS;
+    }
+
+    if(strncmp(input_buffer->buffer, "select", 6) == 0)
+    {
+        statement->type = STATEMENT_SELECT;
+        return PREPARE_SUCCESS;
+    }
+
+    return PREPARE_UNRECOGNIZED_STATEMENT;
+}
+
+/*
+ * execute_statement()
+ */
+void execute_statement(Statement* statement)
+{
+    switch(statement->type)
+    {
+        case STATEMENT_INSERT:
+            fprintf(stdout, "[%s] here is where we do an INSERT\n", __func__);
+            break;
+
+        case STATEMENT_SELECT:
+            fprintf(stdout, "[%s] here is where we do a SELECT\n", __func__);
+            break;
+    }
+
+    // So far, nothing could go wrong here so there is no error handling. 
+    // As the implementation becomes more complete there will need to be 
+    // additional logic here to take care of possible errors.
+}
+
+
 
 void print_prompt(void)
 {
@@ -80,7 +163,6 @@ void close_input_buffer(InputBuffer* input_buffer)
 }
 
 
-
 // Entry point
 int main(int argc, char *argv[])
 {
@@ -91,16 +173,34 @@ int main(int argc, char *argv[])
         print_prompt();
         read_input(input_buffer);
 
-        if(strcmp(input_buffer->buffer, ".exit") == 0)
+        // Commands start with '.' character
+        if(input_buffer->buffer[0] == '.')
         {
-            close_input_buffer(input_buffer);
-            exit(EXIT_SUCCESS);
-        }
-        else
-        {
-            fprintf(stdout, "Unrecognized command [%s].\n", input_buffer->buffer);
+            switch(do_meta_command(input_buffer))
+            {
+                case META_COMMAND_SUCCESS:
+                    continue;
+                case META_COMMAND_UNRECOGNIZED_COMMAND:
+                    fprintf(stdout, "Unrecognized command [%s].\n", input_buffer->buffer);
+                    continue;
+            }
         }
 
+        Statement statement;
+
+        switch(prepare_statement(input_buffer, &statement))
+        {
+            case PREPARE_SUCCESS:
+                break;
+            case PREPARE_UNRECOGNIZED_STATEMENT:
+                fprintf(stdout, "Unrecognized keyword at start of [%s]\n",
+                        input_buffer->buffer
+                );
+                continue;
+        }
+
+        execute_statement(&statement);
+        fprintf(stdout, "Executed.\n");
     }
 
     return 0;

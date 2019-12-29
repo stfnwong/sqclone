@@ -26,7 +26,8 @@ CFLAGS = -Wall -std=c99 -D_REENTRANT -pthread $(OPT)
 CFLAGS += -D_GNU_SOURCE
 LDFLAGS=
 LIBS=
-TEST_LIBS=-lcheck
+TEST_LIBS=
+#TEST_LIBS=-lcheck
 
 INCS=-I$(SRC_DIR)
 # Sources
@@ -66,7 +67,7 @@ $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/test/$@ $(LIBS) $(TEST_LIBS)
 
-TESTS = 
+TESTS=
 
 
 # ======== REAL TARGETS ========== #

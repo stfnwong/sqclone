@@ -5,6 +5,7 @@
  * Stefan Wong 2019
  */
 
+#include <stdlib.h>
 #include <check.h>
 #include "table.h"
 
@@ -18,9 +19,12 @@ START_TEST(test_create_table)
 
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
-}
+} END_TEST
 
 
+/*
+ * Create test suite
+ */
 Suite* sq_table_suite(void)
 {
     Suite* s;

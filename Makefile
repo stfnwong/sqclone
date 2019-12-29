@@ -56,18 +56,18 @@ $(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS)
 PROGRAMS=repl
 
 # =============== TESTS 
+TESTS=test_table
 TEST_SOURCES=$(wildcard test/*.c)	
 TEST_OBJECTS  := $(TEST_SOURCES:test/%.c=$(OBJ_DIR)/%.o)
 
 $(TEST_OBJECTS): $(OBJ_DIR)/%.o : test/%.c 
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
-# Unit test targets 
+
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/test/$@ $(LIBS) $(TEST_LIBS)
 
-TESTS=test_table
 
 
 # ======== REAL TARGETS ========== #

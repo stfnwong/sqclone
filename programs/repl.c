@@ -26,7 +26,6 @@ void print_prompt(void)
 }
 
 
-
 // Entry point
 int main(int argc, char *argv[])
 {

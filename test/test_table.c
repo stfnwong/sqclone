@@ -22,6 +22,14 @@ START_TEST(test_create_table)
 } END_TEST
 
 
+START_TEST(test_fill_table)
+{
+    Table* table;
+
+    table = new_table();
+    ck_assert_ptr_ne(NULL, table);
+}END_TEST
+
 /*
  * Create test suite
  */
@@ -29,12 +37,17 @@ Suite* sq_table_suite(void)
 {
     Suite* s;
     TCase* table_create;
+    TCase* table_fill;
 
     s = suite_create("sqlite_table");
     // Create test 
     table_create = tcase_create("Create Table");
     tcase_add_test(table_create, test_create_table);
     suite_add_tcase(s, table_create);
+    // Table fill test
+    table_fill = tcase_create("Fill Table");
+    tcase_add_test(table_fill, test_fill_table);
+    suite_add_tcase(s, table_fill);
 
     return s;
 }

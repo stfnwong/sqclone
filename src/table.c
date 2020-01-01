@@ -27,8 +27,8 @@ const uint32_t ROW_SIZE = ID_SIZE + USERNAME_SIZE + EMAIL_SIZE;
  *  email       255              36
  *  total       291
  */
-const uint32_t PAGE_SIZE = 4096;        // same as OS VM page size 
-const uint32_t ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
+const uint32_t PAGE_SIZE      = 4096;        // same as OS VM page size 
+const uint32_t ROWS_PER_PAGE  = PAGE_SIZE / ROW_SIZE;
 const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
 /*
@@ -72,6 +72,7 @@ Table* new_table(void)
     if(!table)
         return NULL;
     table->max_rows = TABLE_MAX_ROWS;
+    table->num_rows = 0;
 
     for(uint32_t i = 0; i < TABLE_MAX_PAGES; ++i)
     {

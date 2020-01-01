@@ -44,6 +44,7 @@ typedef enum
 
 MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table);
 
+// Output of command preparation
 typedef enum 
 {
     PREPARE_SUCCESS,

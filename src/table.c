@@ -32,6 +32,18 @@ const uint32_t ROWS_PER_PAGE  = PAGE_SIZE / ROW_SIZE;
 const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
 /*
+ * print_page_info()
+ */
+void print_page_info(void)
+{
+    fprintf(stdout, "ROW_SIZE        : %d\n", ROW_SIZE);
+    fprintf(stdout, "PAGE_SIZE       : %d\n", PAGE_SIZE);
+    fprintf(stdout, "ROWS_PER_PAGE   : %d\n", ROWS_PER_PAGE);
+    fprintf(stdout, "TABLE_MAX_ROWS  : %d\n", TABLE_MAX_ROWS);
+    fprintf(stdout, "TABLE_MAX_PAGES : %d\n", TABLE_MAX_PAGES);
+}
+
+/*
  * print_row()
  */
 void print_row(Row* row)

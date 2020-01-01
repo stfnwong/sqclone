@@ -29,7 +29,7 @@ START_TEST(test_create_table)
 /*
  * Test commands
  */
-START_TEST(test_command_table)
+START_TEST(test_insert_table)
 {
     char inp_valid[]    = "insert 1 user1 user1@domain.net";
     char exp_username[] = "user1";
@@ -77,20 +77,66 @@ START_TEST(test_command_table)
     for(int c = 0; c < 17; ++c)
         ck_assert_int_eq(exp_email[c], row.email[c]);
 
-
 } END_TEST
 
 
 /*
  * Test table limit
  */
+// At this time, the maximum number of pages in a single table is 100
 START_TEST(test_fill_table)
 {
     char input[255];
     Table* table;
+    Statement     statement;
+    PrepareResult prep_result;
+    ExecuteResult exec_result;
+    InputBuffer*  input_buffer;
 
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
+    ck_assert_int_eq(0, table->num_rows);
+
+    // Get a buffer for commands
+    input_buffer = new_input_buffer();
+    ck_assert_ptr_ne(NULL, input_buffer);
+
+    print_page_info();
+    fprintf(stdout, "[%s] inserting rows into table...\n", __func__);
+    // Create new rows until the table is full
+    int exp_max_row = 1300;     // 13 rows per page, 100 pages per table
+    int cur_row = -1;
+    do
+    {
+        cur_row++;
+        sprintf(input, "insert %d user%d, email%d@domain.net", cur_row, cur_row, cur_row);
+        input_buffer->buffer = input;
+        prep_result = prepare_statement(input_buffer, &statement);
+        ck_assert_int_eq(PREPARE_SUCCESS, prep_result);
+        exec_result = execute_statement(&statement, table);
+
+        // Check the expected exec_result here 
+        if(cur_row < exp_max_row)
+            ck_assert_int_eq(EXECUTE_SUCCESS, exec_result);
+        else
+            ck_assert_int_eq(EXECUTE_TABLE_FULL, exec_result);
+
+    } while(exec_result != EXECUTE_TABLE_FULL);
+
+    fprintf(stdout, "[%s] inserted %d rows into table\n", __func__, cur_row);
+
+    // Any subsequent inserts should fail
+    for(int i = 0; i < 128; ++i)
+    {
+        sprintf(input, "insert %d user%d, email%d@domain.net", i+cur_row, i+cur_row, i+cur_row);
+        input_buffer->buffer = input;
+        prep_result = prepare_statement(input_buffer, &statement);
+        ck_assert_int_eq(PREPARE_SUCCESS, prep_result);
+        exec_result = execute_statement(&statement, table);
+        ck_assert_int_eq(EXECUTE_TABLE_FULL, exec_result);
+    }
+
+
 }END_TEST
 
 
@@ -111,7 +157,7 @@ Suite* sq_table_suite(void)
     suite_add_tcase(s, table_create);
     // Test the commands work
     table_command = tcase_create("Command Table");
-    tcase_add_test(table_command, test_command_table);
+    tcase_add_test(table_command, test_insert_table);
     suite_add_tcase(s, table_command);
     // Table fill test
     table_fill = tcase_create("Fill Table");

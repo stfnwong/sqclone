@@ -10,9 +10,14 @@
 
 #define COLUMN_USERNAME_SIZE 32
 #define COLUMN_EMAIL_SIZE 255
+#define TABLE_MAX_PAGES 100   // NOTE: this limit may change in future
 
 #include <stdint.h>
 #include <string.h>
+/*
+ * print_page_info()
+ */
+void print_page_info(void);
 
 // Row data structure for DB
 typedef struct 
@@ -55,14 +60,13 @@ void deserialize_row(void* src, Row* dst);
  * Table - structure that points to pages of rows
    and keeps track of how many rows there are
 */
-#define TABLE_MAX_PAGES 100             // NOTE: this limit may change in future
 
 // Actual table structure
 typedef struct 
 {
     uint32_t num_rows;
     uint32_t max_rows;
-    void* pages[TABLE_MAX_PAGES];
+    void*    pages[TABLE_MAX_PAGES];
 } Table;
 
 

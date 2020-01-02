@@ -178,8 +178,6 @@ spec("table")
 
         sprintf(input, "insert 44 %s e@mail.net", long_name);
         input_buffer->buffer = input;
-        fprintf(stdout, "[%s] inserting string [%s]\n", __func__, input_buffer->buffer);
-        fprintf(stdout, "[%s] long_name %s has %ld chars\n", __func__, long_name, strlen(long_name));
         // Insert some data into the table
         prep_result = prepare_statement(input_buffer, &statement);
         check(prep_result == PREPARE_STRING_TOO_LONG);
@@ -233,5 +231,66 @@ spec("table")
 
         free(table);
         close_input_buffer(input_buffer);
+    }
+
+    it("rejects negative ids")
+    {
+        char*         input;
+        Table*        table;
+        Statement     statement;
+        PrepareResult prep_result;
+        ExecuteResult exec_result;
+        InputBuffer*  input_buffer;
+
+        // Get a new table
+        table = new_table();
+        check(table != NULL);
+        check(table->num_rows == 0);
+
+        // Allocate input here to avoid double-free
+        input = malloc(sizeof(char) * 256);
+        check(input != NULL);
+
+        // get a new input buffer
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        // Insert some invalid data
+        strcpy(input, "insert -1 user1 user1@domain.net");
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_NEGATIVE_ID);
+        check(table->num_rows == 0);
+
+        // Insert some more invalid data
+        strcpy(input, "insert -100 user1 user1@domain.net");
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_NEGATIVE_ID);
+        check(table->num_rows == 0);
+
+        // With a valid input it should be fine.
+        // Insert some more invalid data
+        strcpy(input, "insert 4100 user1 user1@domain.net");
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+
+        exec_result = execute_statement(&statement, table);
+        check(exec_result == EXECUTE_SUCCESS);
+
+        // Check the data 
+        check(table->num_rows == 1);
+
+        close_input_buffer(input_buffer);
+        free_table(table);
     }
 }

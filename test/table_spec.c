@@ -12,6 +12,7 @@
 
 spec("table")
 {
+    // Check that we can create a table object
     it("creates a non null pointer when initalized")
     {
         Table* table;
@@ -21,10 +22,52 @@ spec("table")
         free_table(table);
     }
 
+    // Test row insertion
+    it("inserts and selects a row")
+    {
+        char inp_valid[]    = "insert 1 user1 user1@domain.net";
+        char exp_username[] = "user1";
+        char exp_email[]    = "user1@domain.net";
 
-    //it("inserts and selects a row")
-    //{
-    //    check(
-    //}
+        Statement statement;
+        PrepareResult prep_result;
+        ExecuteResult exec_result;
+        Table*        table;
+        InputBuffer*  input_buffer;
 
+        // Get an input buffer
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        // get a new table
+        table = new_table();
+        check(table != NULL);
+        check(table->num_rows == 0);
+        input_buffer->buffer = inp_valid;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+
+        // Insert some data into the table
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_SUCCESS);
+        exec_result = execute_statement(&statement, table);
+        check(exec_result == EXECUTE_SUCCESS);
+
+        // Check the data 
+        check(table->num_rows == 1);
+        Row row;
+        deserialize_row(row_slot(table, 0), &row);
+        
+        check(row.id == 1);
+        // expecting username to  be 'user1'  (5 chars)
+        for(int c = 0; c < 5; ++c)
+            check(exp_username[c] == row.username[c]);
+        // expecting email to be user1@domain.net (17 chars)
+        for(int c = 0; c < 17; ++c)
+            check(exp_email[c] == row.email[c]);
+
+        //close_input_buffer(input_buffer);
+        free_table(table);
+    }
 }

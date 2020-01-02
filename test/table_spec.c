@@ -145,4 +145,93 @@ spec("table")
         close_input_buffer(input_buffer);
         //free_table(table);        // TODO: can't free table?
     }
+
+    it("rejects names longer than 255 chars")
+    {
+        char  long_name[300];
+        char* input;
+
+        Table* table;
+        Statement     statement;
+        PrepareResult prep_result;
+        InputBuffer*  input_buffer;
+
+        input = malloc(sizeof(char) * 798);
+
+        // Get a table
+        table = new_table();
+        check(table != NULL);
+        check(table->num_rows == 0);
+
+        // Get a buffer for commands
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        // Create a long user name
+        long_name[0] = 'u';
+        long_name[1] = 's';
+        long_name[2] = 'e';
+        long_name[3] = 'r';
+        for(int c = 4; c < 229; ++c)
+            long_name[c] = 'a';
+        long_name[229] = '\0';
+
+        sprintf(input, "insert 44 %s e@mail.net", long_name);
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] inserting string [%s]\n", __func__, input_buffer->buffer);
+        fprintf(stdout, "[%s] long_name %s has %ld chars\n", __func__, long_name, strlen(long_name));
+        // Insert some data into the table
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_STRING_TOO_LONG);
+
+        free(table);
+        close_input_buffer(input_buffer);
+    }
+
+
+    it("rejects emails longer than 255 chars")
+    {
+        char  long_email[300];
+        char* input;
+
+        Table* table;
+        Statement     statement;
+        PrepareResult prep_result;
+        InputBuffer*  input_buffer;
+
+        input = malloc(sizeof(char) * 798);
+
+        // Get a table
+        table = new_table();
+        check(table != NULL);
+        check(table->num_rows == 0);
+
+        // Get a buffer for commands
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        // Create a long email
+        long_email[0] = 'u';
+        long_email[1] = 's';
+        long_email[2] = 'e';
+        long_email[3] = 'r';
+        for(int c = 4; c < 289; ++c)
+            long_email[c] = '0';
+
+        long_email[289] = '@'; 
+        long_email[290] = 'd';
+        long_email[291] = '.';
+        long_email[292] = 'n';
+        long_email[293] = 'e';
+        long_email[294] = 't';
+        long_email[295] = '\0';
+
+        sprintf(input, "insert 10 user_with_long_name %s", long_email);
+        input_buffer->buffer = input;
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_STRING_TOO_LONG);
+
+        free(table);
+        close_input_buffer(input_buffer);
+    }
 }

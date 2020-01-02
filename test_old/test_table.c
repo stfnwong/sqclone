@@ -189,9 +189,9 @@ START_TEST(test_char_limit)
 
     // Create a long user name
     long_name[0] = 'u';
-    long_name[0] = 's';
-    long_name[0] = 'e';
-    long_name[0] = 'r';
+    long_name[1] = 's';
+    long_name[2] = 'e';
+    long_name[3] = 'r';
     for(int c = 5; c < 128; ++c)
         long_name[c] = '0';
     long_name[129] = '\0';

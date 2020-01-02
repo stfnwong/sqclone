@@ -23,6 +23,9 @@ START_TEST(test_create_table)
 
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
+
+    free_table(table);
+
 } END_TEST
 
 
@@ -77,6 +80,9 @@ START_TEST(test_insert_table)
     for(int c = 0; c < 17; ++c)
         ck_assert_int_eq(exp_email[c], row.email[c]);
 
+    //close_input_buffer(input_buffer);
+    //free_table(table);
+
 } END_TEST
 
 
@@ -102,6 +108,8 @@ START_TEST(test_fill_table)
     ck_assert_ptr_ne(NULL, input_buffer);
 
     print_page_info();
+    fprintf(stdout, "\n");
+
     fprintf(stdout, "[%s] inserting rows into table...\n", __func__);
     // Create new rows until the table is full
     int exp_max_row = 1300;     // 13 rows per page, 100 pages per table
@@ -124,6 +132,8 @@ START_TEST(test_fill_table)
     } while(exec_result != EXECUTE_TABLE_FULL);
 
     fprintf(stdout, "[%s] inserted %d rows into table\n", __func__, cur_row);
+    ck_assert_int_eq(1300, table->num_rows);
+    ck_assert_int_eq(table->max_rows, table->num_rows);
 
     // Any subsequent inserts should fail
     for(int i = 0; i < 128; ++i)
@@ -136,8 +146,72 @@ START_TEST(test_fill_table)
         ck_assert_int_eq(EXECUTE_TABLE_FULL, exec_result);
     }
 
+    //close_input_buffer(input_buffer);
+    //free_table(table);
 
 }END_TEST
+
+
+/*
+ * Test character limit 
+ */
+START_TEST(test_char_limit)
+{
+    char input[798];        // this size prevents sprintf destinaton size warning
+    char long_name[256];
+    char long_email[256];
+
+    Table* table;
+    Statement     statement;
+    PrepareResult prep_result;
+    InputBuffer*  input_buffer;
+
+    table = new_table();
+    ck_assert_ptr_ne(NULL, table);
+    ck_assert_int_eq(0, table->num_rows);
+
+    // Get a buffer for commands
+    input_buffer = new_input_buffer();
+    ck_assert_ptr_ne(NULL, input_buffer);
+
+    // Create a long user name
+    long_name[0] = 'u';
+    long_name[0] = 's';
+    long_name[0] = 'e';
+    long_name[0] = 'r';
+    for(int c = 5; c < 128; ++c)
+        long_name[c] = '0';
+    long_name[129] = '\0';
+
+    // Create a long email
+    //sprintf(long_email, "user");
+    long_email[0] = 'u';
+    long_email[1] = 's';
+    long_email[2] = 'e';
+    long_email[3] = 'r';
+    for(int c = 4; c < 150; ++c)
+        long_email[c] = '0';
+
+    long_email[151] = '@'; 
+    long_email[152] = 'd';
+    long_email[153] = '.';
+    long_email[154] = 'n';
+    long_email[155] = 'e';
+    long_email[156] = 't';
+    long_email[157] = '\0';
+
+    // Now try to insert into table
+    sprintf(input, "insert %d %s %s", 44, long_name, long_email);
+    input_buffer->buffer = input;
+
+    // Insert some data into the table
+    prep_result = prepare_statement(input_buffer, &statement);
+    ck_assert_int_eq(PREPARE_STRING_TOO_LONG, prep_result);
+
+    //close_input_buffer(input_buffer);
+    //free_table(table);
+
+} END_TEST
 
 
 /*
@@ -147,8 +221,9 @@ Suite* sq_table_suite(void)
 {
     Suite* s;
     TCase* table_create;
-    TCase* table_command;
+    TCase* table_insert;
     TCase* table_fill;
+    TCase* table_char_limit;
 
     s = suite_create("sqlite_table");
     // Create test 
@@ -156,13 +231,17 @@ Suite* sq_table_suite(void)
     tcase_add_test(table_create, test_create_table);
     suite_add_tcase(s, table_create);
     // Test the commands work
-    table_command = tcase_create("Command Table");
-    tcase_add_test(table_command, test_insert_table);
-    suite_add_tcase(s, table_command);
+    table_insert = tcase_create("Insert Table");
+    tcase_add_test(table_insert, test_insert_table);
+    suite_add_tcase(s, table_insert);
     // Table fill test
     table_fill = tcase_create("Fill Table");
     tcase_add_test(table_fill, test_fill_table);
     suite_add_tcase(s, table_fill);
+    // Test character limit
+    table_char_limit = tcase_create("Table Character Limit");
+    tcase_add_test(table_char_limit, test_char_limit);
+    suite_add_tcase(s, table_char_limit);
 
     return s;
 }

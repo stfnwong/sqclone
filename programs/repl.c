@@ -68,6 +68,10 @@ int main(int argc, char *argv[])
                 fprintf(stdout, "Syntax error in statement [%s]\n", input_buffer->buffer);
                 continue;
 
+            case PREPARE_STRING_TOO_LONG:
+                fprintf(stdout, "String too long (%ld chars)\n", strlen(input_buffer->buffer));
+                continue;
+
             case PREPARE_UNRECOGNIZED_STATEMENT:
                 fprintf(stdout, "Unrecognized keyword at start of [%s]\n",
                         input_buffer->buffer

@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "input.h"
 
 /*
@@ -79,6 +80,48 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table)
         return META_COMMAND_UNRECOGNIZED_COMMAND;
 }
 
+/*
+ * prepare_insert()
+ */
+PrepareResult prepare_insert(InputBuffer* input_buffer, Statement* statement)
+{
+    char* keyword;
+    char* id_string;
+    char* username;
+    char* email;
+    int   id;
+
+    statement->type = STATEMENT_INSERT;
+    keyword         = strtok(input_buffer->buffer, " ");
+    id_string       = strtok(NULL, " ");
+    username        = strtok(NULL, " ");
+    email           = strtok(NULL, " ");
+
+    // Debug, remove
+    fprintf(stdout, "[%s] keyword   : %s\n", __func__, keyword);
+    fprintf(stdout, "[%s] id_string : %s\n", __func__, id_string);
+    fprintf(stdout, "[%s] username  : %s\n", __func__, username);
+    fprintf(stdout, "[%s] email     : %s\n", __func__, email);
+
+    // check what strings we've received
+    if(id_string == NULL || username == NULL || email == NULL)
+    {
+        return PREPARE_SYNTAX_ERROR;  
+    }
+
+    id = atoi(id_string);
+    // Check lengths
+    if(strlen(username) > COLUMN_USERNAME_SIZE)
+        return PREPARE_STRING_TOO_LONG;
+    if(strlen(email) > COLUMN_EMAIL_SIZE)
+        return PREPARE_STRING_TOO_LONG;
+
+    statement->row_to_insert.id       = id;
+    strcpy(statement->row_to_insert.username, username);
+    strcpy(statement->row_to_insert.email, email);
+
+    return PREPARE_SUCCESS;
+}
 
 /*
  * prepare_statement()
@@ -87,22 +130,7 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
 {
     if(strncmp(input_buffer->buffer, "insert", 6) == 0)
     {
-        int args_assigned;
-
-        statement->type = STATEMENT_INSERT;
-        args_assigned = sscanf(
-                input_buffer->buffer, "insert %d %s %s",
-                &(statement->row_to_insert.id),
-                statement->row_to_insert.username,
-                statement->row_to_insert.email
-        );
-        // Catch incorrect numbers of arguments
-        if(args_assigned < 3)
-        {
-            return PREPARE_SYNTAX_ERROR;
-        }
-
-        return PREPARE_SUCCESS;
+        return prepare_insert(input_buffer, statement);
     }
 
     if(strncmp(input_buffer->buffer, "select", 6) == 0)

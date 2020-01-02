@@ -13,6 +13,8 @@
 #include "input.h"
 #include "table.h"
 
+// TODO : also need a test for PREPARE_SYNTAX_ERROR, PREPARE_UNRECOGNIZED_STATEMENT
+
 
 /*
  * Basic init test
@@ -94,12 +96,16 @@ START_TEST(test_insert_table)
 // At this time, the maximum number of pages in a single table is 100
 START_TEST(test_fill_table)
 {
-    char input[255];
+    //char input[255];
+    char* input;
     Table* table;
     Statement     statement;
     PrepareResult prep_result;
     ExecuteResult exec_result;
     InputBuffer*  input_buffer;
+
+    input = malloc(sizeof(char) * 256);
+    ck_assert_ptr_ne(NULL, input);
 
     // Get a table
     table = new_table();
@@ -149,7 +155,8 @@ START_TEST(test_fill_table)
         ck_assert_int_eq(EXECUTE_TABLE_FULL, exec_result);
     }
 
-    close_input_buffer(input_buffer);
+    //input_buffer->buffer = NULL;
+    //close_input_buffer(input_buffer);
     //free_table(table);
 
 }END_TEST
@@ -160,14 +167,17 @@ START_TEST(test_fill_table)
  */
 START_TEST(test_char_limit)
 {
-    char input[798];        // this size prevents sprintf destinaton size warning
+    //char input[798];        // this size prevents sprintf destinaton size warning
     char long_name[256];
     char long_email[256];
+    char* input;
 
     Table* table;
     Statement     statement;
     PrepareResult prep_result;
     InputBuffer*  input_buffer;
+
+    input = malloc(sizeof(char) * 798);
 
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
@@ -204,14 +214,80 @@ START_TEST(test_char_limit)
     long_email[157] = '\0';
 
     // Now try to insert into table
-    sprintf(input, "insert %d %s %s", 44, long_name, long_email);
+    sprintf(input, "insert 44 %s %s", long_name, long_email);
     input_buffer->buffer = input;
 
     // Insert some data into the table
     prep_result = prepare_statement(input_buffer, &statement);
     ck_assert_int_eq(PREPARE_STRING_TOO_LONG, prep_result);
 
-    //close_input_buffer(input_buffer);
+    close_input_buffer(input_buffer);
+    free_table(table);
+
+} END_TEST
+
+
+/*
+ * Test negative id 
+ */
+START_TEST(test_table_negative_id)
+{
+    char*         input;
+    Table*        table;
+    Statement     statement;
+    PrepareResult prep_result;
+    ExecuteResult exec_result;
+    InputBuffer*  input_buffer;
+
+    // Get a new table
+    table = new_table();
+    ck_assert_ptr_ne(NULL, table);
+    ck_assert_int_eq(0, table->num_rows);
+
+    // Allocate input here to avoid double-free
+    input = malloc(sizeof(char) * 256);
+    ck_assert_ptr_ne(NULL, input);
+
+    // get a new input buffer
+    input_buffer = new_input_buffer();
+    ck_assert_ptr_ne(NULL, input_buffer);
+
+    // Insert some invalid data
+    strcpy(input, "insert -1 user1 user1@domain.net");
+    input_buffer->buffer = input;
+    fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+            __func__, input_buffer->buffer
+    );
+
+    prep_result = prepare_statement(input_buffer, &statement);
+    ck_assert_int_eq(PREPARE_NEGATIVE_ID, prep_result);
+    ck_assert_int_eq(0, table->num_rows);
+
+    // Insert some more invalid data
+    strcpy(input, "insert -100 user1 user1@domain.net");
+    input_buffer->buffer = input;
+    fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+            __func__, input_buffer->buffer
+    );
+    prep_result = prepare_statement(input_buffer, &statement);
+    ck_assert_int_eq(PREPARE_NEGATIVE_ID, prep_result);
+    ck_assert_int_eq(0, table->num_rows);
+
+    // With a valid input it should be fine.
+    // Insert some more invalid data
+    strcpy(input, "insert 4100 user1 user1@domain.net");
+    input_buffer->buffer = input;
+    fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+            __func__, input_buffer->buffer
+    );
+
+    exec_result = execute_statement(&statement, table);
+    ck_assert_int_eq(EXECUTE_SUCCESS, exec_result);
+
+    // Check the data 
+    ck_assert_int_eq(1, table->num_rows);
+
+    close_input_buffer(input_buffer);
     free_table(table);
 
 } END_TEST
@@ -227,6 +303,7 @@ Suite* sq_table_suite(void)
     TCase* table_insert;
     TCase* table_fill;
     TCase* table_char_limit;
+    TCase* table_negative_id;
 
     s = suite_create("sqlite_table");
     // Create test 
@@ -245,6 +322,10 @@ Suite* sq_table_suite(void)
     table_char_limit = tcase_create("Table Character Limit");
     tcase_add_test(table_char_limit, test_char_limit);
     suite_add_tcase(s, table_char_limit);
+    // Test negative index
+    table_negative_id = tcase_create("Table Negative Index");
+    tcase_add_test(table_negative_id, test_table_negative_id);
+    suite_add_tcase(s, table_negative_id);
 
     return s;
 }

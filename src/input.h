@@ -48,6 +48,7 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table);
 typedef enum 
 {
     PREPARE_SUCCESS,
+    PREPARE_NEGATIVE_ID,
     PREPARE_STRING_TOO_LONG,
     PREPARE_SYNTAX_ERROR,
     PREPARE_UNRECOGNIZED_STATEMENT

@@ -64,6 +64,10 @@ int main(int argc, char *argv[])
             case PREPARE_SUCCESS:
                 break;
 
+            case PREPARE_NEGATIVE_ID:
+                fprintf(stdout, "Illegal ID in input [%s], ID must be positive", input_buffer->buffer);
+                continue;
+
             case PREPARE_SYNTAX_ERROR:
                 fprintf(stdout, "Syntax error in statement [%s]\n", input_buffer->buffer);
                 continue;

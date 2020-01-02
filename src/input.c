@@ -104,6 +104,9 @@ PrepareResult prepare_insert(InputBuffer* input_buffer, Statement* statement)
     }
 
     id = atoi(id_string);
+    if(id < 0)
+        return PREPARE_NEGATIVE_ID;
+
     // Check lengths
     if(strlen(username) > COLUMN_USERNAME_SIZE)
         return PREPARE_STRING_TOO_LONG;

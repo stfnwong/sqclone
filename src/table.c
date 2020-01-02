@@ -99,8 +99,15 @@ Table* new_table(void)
  */
 void free_table(Table* table)
 {
-    for(int i = 0; table->pages[i] != NULL; ++i)
+    for(int i = 0; table->pages[i]; ++i)
         free(table->pages[i]);
+
+    //int i = 0;
+    //while(table->pages[i] != NULL)
+    //{
+    //    free(table->pages[i]);
+    //    i++;
+    //}
 
     free(table);
 }

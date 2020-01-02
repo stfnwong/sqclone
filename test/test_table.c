@@ -41,13 +41,15 @@ START_TEST(test_insert_table)
     Statement statement;
     PrepareResult prep_result;
     ExecuteResult exec_result;
-    Table* table;
-    InputBuffer* input_buffer;
+    Table*        table;
+    InputBuffer*  input_buffer;
 
+    // get a new table
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
     ck_assert_int_eq(0, table->num_rows);
 
+    // get a new input buffer
     input_buffer = new_input_buffer();
     ck_assert_ptr_ne(NULL, input_buffer);
 
@@ -81,7 +83,7 @@ START_TEST(test_insert_table)
         ck_assert_int_eq(exp_email[c], row.email[c]);
 
     //close_input_buffer(input_buffer);
-    //free_table(table);
+    free_table(table);
 
 } END_TEST
 
@@ -99,6 +101,7 @@ START_TEST(test_fill_table)
     ExecuteResult exec_result;
     InputBuffer*  input_buffer;
 
+    // Get a table
     table = new_table();
     ck_assert_ptr_ne(NULL, table);
     ck_assert_int_eq(0, table->num_rows);
@@ -146,7 +149,7 @@ START_TEST(test_fill_table)
         ck_assert_int_eq(EXECUTE_TABLE_FULL, exec_result);
     }
 
-    //close_input_buffer(input_buffer);
+    close_input_buffer(input_buffer);
     //free_table(table);
 
 }END_TEST
@@ -209,7 +212,7 @@ START_TEST(test_char_limit)
     ck_assert_int_eq(PREPARE_STRING_TOO_LONG, prep_result);
 
     //close_input_buffer(input_buffer);
-    //free_table(table);
+    free_table(table);
 
 } END_TEST
 

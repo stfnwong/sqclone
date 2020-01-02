@@ -97,12 +97,6 @@ PrepareResult prepare_insert(InputBuffer* input_buffer, Statement* statement)
     username        = strtok(NULL, " ");
     email           = strtok(NULL, " ");
 
-    // Debug, remove
-    fprintf(stdout, "[%s] keyword   : %s\n", __func__, keyword);
-    fprintf(stdout, "[%s] id_string : %s\n", __func__, id_string);
-    fprintf(stdout, "[%s] username  : %s\n", __func__, username);
-    fprintf(stdout, "[%s] email     : %s\n", __func__, email);
-
     // check what strings we've received
     if(id_string == NULL || username == NULL || email == NULL)
     {

@@ -8,6 +8,7 @@
 #ifndef __SQ_INPUT_H
 #define __SQ_INPUT_H
 
+#include <unistd.h>
 #include "table.h"
 
 // Input buffer structure

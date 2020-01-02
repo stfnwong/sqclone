@@ -54,20 +54,17 @@ $(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/$@ $(LIBS) $(TEST_LIBS)
 
-
-# =============== TESTS 
-TESTS=test_table
+# =============== BDD TESTS 
+TESTS=table_spec
 TEST_SOURCES=$(wildcard test/*.c)	
 TEST_OBJECTS  := $(TEST_SOURCES:test/%.c=$(OBJ_DIR)/%.o)
 
 $(TEST_OBJECTS): $(OBJ_DIR)/%.o : test/%.c 
 	$(CC) $(CFLAGS) $(INCS) -c $< -o $@ 
 
-
 $(TESTS): $(TEST_OBJECTS) $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
 		-o bin/test/$@ $(LIBS) $(TEST_LIBS)
-
 
 
 # ======== REAL TARGETS ========== #

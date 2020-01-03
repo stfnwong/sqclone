@@ -74,7 +74,7 @@ spec("table")
 
         // Check the data 
         check(table->num_rows == 1);
-        cursor = table_end(table);
+        cursor = table_start(table);
         deserialize_row(cursor_value(cursor), &row);
 
         fprintf(stdout, "[%s] deserialized row (%d/%d) :\n", __func__, row.id, table->num_rows);

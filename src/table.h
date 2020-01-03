@@ -56,6 +56,23 @@ void print_row(Row* row);
 void serialize_row(Row* src, void* dest);
 void deserialize_row(void* src, Row* dst);
 
+
+/*
+ * Pager
+ * Object that accesses the cache and file. Tables make 
+ * requests for pages through the pager.
+ */
+typedef struct
+{
+    int      fd;     // file descriptor
+    uint32_t file_length;
+    void*    pages[TABLE_MAX_PAGES];
+} Pager;
+
+Pager* pager_open(const char* filename);
+void   pager_flush(Pager* pager, uint32_t page_num, uint32_t size);
+void*  get_page(Pager* pager, uint32_t page_num);
+
 /* 
  * Table - structure that points to pages of rows
    and keeps track of how many rows there are
@@ -66,12 +83,12 @@ typedef struct
 {
     uint32_t num_rows;
     uint32_t max_rows;
-    void*    pages[TABLE_MAX_PAGES];
+    Pager*   pager;
 } Table;
 
 
-Table* new_table(void);
-void   free_table(Table* table);
+Table* db_open(const char* filename);
+void   db_close(Table* table);
 void*  row_slot(Table* table, uint32_t row_num);
 
 

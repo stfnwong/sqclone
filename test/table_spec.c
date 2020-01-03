@@ -20,19 +20,25 @@ spec("table")
     // Check that we can create a table object
     it("creates a non null pointer when initalized")
     {
+        const char db_file[] = "test/init.db";
         Table* table;
 
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
-        free_table(table);
+        db_close(table);
+
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 
     // Test row insertion
     it("inserts and selects a row")
     {
-        char inp_valid[]    = "insert 1 user1 user1@domain.net";
-        char exp_username[] = "user1";
-        char exp_email[]    = "user1@domain.net";
+        const char db_file[]      = "test/insert_select.db";
+        char       inp_valid[]    = "insert 1 user1 user1@domain.net";
+        char       exp_username[] = "user1";
+        char       exp_email[]    = "user1@domain.net";
 
         Statement statement;
         PrepareResult prep_result;
@@ -45,7 +51,7 @@ spec("table")
         check(input_buffer != NULL);
 
         // get a new table
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
         check(table->num_rows == 0);
         input_buffer->buffer = inp_valid;
@@ -73,11 +79,16 @@ spec("table")
             check(exp_email[c] == row.email[c]);
 
         //close_input_buffer(input_buffer);
-        free_table(table);
+        db_close(table);
+
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 
     it("returns EXECUTE_TABLE_FULL when full")
     {
+        const char    db_file[] = "test/db_full.db";
         char*         input;
         Table*        table;
         Statement     statement;
@@ -89,7 +100,7 @@ spec("table")
         check(input != NULL);
 
         // Get a table
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
         check(table->num_rows == 0);
 
@@ -143,13 +154,19 @@ spec("table")
         }
 
         close_input_buffer(input_buffer);
-        //free_table(table);        // TODO: can't free table?
+        //db_close(table);        // TODO: can't free table?
+
+        // clean up db file 
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 
     it("rejects names longer than 255 chars")
     {
-        char  long_name[300];
-        char* input;
+        const char* db_file = "test/long_name.db";
+        char        long_name[300];
+        char*       input;
 
         Table* table;
         Statement     statement;
@@ -159,7 +176,7 @@ spec("table")
         input = malloc(sizeof(char) * 798);
 
         // Get a table
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
         check(table->num_rows == 0);
 
@@ -184,13 +201,19 @@ spec("table")
 
         free(table);
         close_input_buffer(input_buffer);
+
+        // clean up db file 
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 
 
     it("rejects emails longer than 255 chars")
     {
-        char  long_email[300];
-        char* input;
+        const char* db_file = "test/long_email.db";
+        char        long_email[300];
+        char*       input;
 
         Table* table;
         Statement     statement;
@@ -200,7 +223,7 @@ spec("table")
         input = malloc(sizeof(char) * 798);
 
         // Get a table
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
         check(table->num_rows == 0);
 
@@ -231,10 +254,16 @@ spec("table")
 
         free(table);
         close_input_buffer(input_buffer);
+
+        // clean up db file 
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 
     it("rejects negative ids")
     {
+        const char*   db_file = "test/neg_id.db";
         char*         input;
         Table*        table;
         Statement     statement;
@@ -243,7 +272,7 @@ spec("table")
         InputBuffer*  input_buffer;
 
         // Get a new table
-        table = new_table();
+        table = db_open(db_file);
         check(table != NULL);
         check(table->num_rows == 0);
 
@@ -291,6 +320,11 @@ spec("table")
         check(table->num_rows == 1);
 
         close_input_buffer(input_buffer);
-        free_table(table);
+        db_close(table);
+
+        // remove the *.db file
+        int status = remove(db_file);
+        if(status != 0)
+            fprintf(stderr, "[%s] failed to remove test database [%s]\n", __func__, db_file);
     }
 }

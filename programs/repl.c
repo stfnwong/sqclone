@@ -29,11 +29,20 @@ void print_prompt(void)
 // Entry point
 int main(int argc, char *argv[])
 {
+    char* filename;
     InputBuffer* input_buffer = new_input_buffer();
     Statement statement;
     Table* table;
 
-    table = new_table();
+    // For now we just accept a single argument - the name of the db file
+    if(argc < 2)
+    {
+        fprintf(stderr, "No database name specified\n");
+        exit(EXIT_FAILURE);
+    }
+
+    filename = argv[1];
+    table = db_open(filename);
     if(!table)
     {
         fprintf(stderr, "[%s] failed to allocate memory for table\n", __func__);
@@ -95,6 +104,9 @@ int main(int argc, char *argv[])
                 break;
         }
     }
+
+    db_close(table);
+    close_input_buffer(input_buffer);
 
     return 0;
 }

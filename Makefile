@@ -78,6 +78,7 @@ programs: $(PROGRAMS)
 clean:
 	rm -rfv *.o $(OBJ_DIR)/*.o 
 	rm -fv bin/test/test_*
+	rm -fv repl
 
 print-%:
 	@echo $* = $($*)

@@ -2,3 +2,11 @@
 *.swp
 # Ignore object files 
 *.o
+# Ignore *.db files 
+*.db
+
+# Ignore repl binary
+repl
+# Ignore tags files
+tags
+

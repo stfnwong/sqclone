@@ -97,10 +97,10 @@ Pager* pager_open(const char* filename)
         return NULL;
     }
 
-    size_t file_length = lseek(fd, 0, SEEK_END);
+    // setup pager
     pager = malloc(sizeof(Pager));
     pager->fd = fd;
-    pager->file_length = file_length;
+    pager->file_length = lseek(fd, 0, SEEK_END);
 
     for(uint32_t p = 0; p < TABLE_MAX_PAGES; ++p)
         pager->pages[p] = NULL;
@@ -240,7 +240,7 @@ void db_close(Table* table)
         }
     }
 
-    int result = close(pager->fd);
+    int result = close(pager->fd);      // <- TODO : segfault here
     if(result == -1)
     {
         fprintf(stdout, "[%s] Error closing db file\n", __func__);

@@ -66,8 +66,10 @@ void print_row(Row* row)
 void serialize_row(Row* src, void* dest)
 {
     memcpy(dest + ID_OFFSET, &(src->id), ID_SIZE);
-    memcpy(dest + USERNAME_OFFSET, &(src->username), USERNAME_SIZE);
-    memcpy(dest + EMAIL_OFFSET, &(src->email), EMAIL_SIZE);
+    // we use strncpy here to ensure that all bytes are
+    // initialized to zeros
+    strncpy(dest + USERNAME_OFFSET, src->username, USERNAME_SIZE);
+    strncpy(dest + EMAIL_OFFSET, src->email, USERNAME_SIZE);
 }
 
 /*
@@ -80,17 +82,19 @@ void deserialize_row(void* src, Row* dst)
     memcpy(&(dst->email), src + EMAIL_OFFSET, EMAIL_SIZE);
 }
 
-
 /*
  * pager_open()
  */
 Pager* pager_open(const char* filename)
 {
-    // set permissions to be read/write, create, user write permission, user read permission
     int    fd;
     Pager* pager;
 
-    fd = open(filename, O_RDWR | O_CREAT | S_IWUSR | S_IRUSR);
+    fd = open(
+            filename, 
+            O_RDWR | O_CREAT,       // read/write mode, create if file does not exist
+            S_IWUSR | S_IRUSR       // user read permission, user write permission
+    );
     if(fd == -1)
     {
         fprintf(stdout, "[%s] unable to open file %s\n", __func__, filename);

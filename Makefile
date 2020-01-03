@@ -48,7 +48,7 @@ $(PROGRAM_OBJECTS): $(OBJ_DIR)/%.o : $(PROGRAM_DIR)/%.c
 
 $(PROGRAMS): $(OBJECTS) $(PROGRAM_OBJECTS) 
 	$(CC) $(LDFLAGS) $(OBJECTS) $(OBJ_DIR)/$@.o\
-		-o bin/$@ $(LIBS) $(TEST_LIBS)
+		-o $@ $(LIBS) $(TEST_LIBS)
 
 # =============== BDD TESTS 
 TESTS=table_spec

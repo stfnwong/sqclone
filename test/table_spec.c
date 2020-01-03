@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>     // for access()
 
 // units under test 
 #include "input.h"
@@ -18,8 +19,10 @@
 spec("table")
 {
     static const char* test_db_name = "test/test.db";
-    before()
+
+    after_each()
     {
+        fprintf(stdout, "[%s] removing db file [%s]\n", __func__, test_db_name);
         int status = remove(test_db_name);
         if(status != 0)
             fprintf(stderr, "[%s] failed to remove db file [%s]\n", __func__, test_db_name);

@@ -189,16 +189,22 @@ Table* db_open(const char* filename)
     Table* table;
 
     pager = pager_open(filename);
+    if(pager == NULL)
+    {
+        fprintf(stderr, "[%s] failed to create pager object for table with db file [%s]\n",
+                __func__, filename);
+        return NULL;
+    }
     table = malloc(sizeof(Table));
     if(!table)
+    {
+        fprintf(stderr, "[%s] failed to allocate memory for table with db file [%s]\n",
+                __func__, filename);
         return NULL;
+    }
     table->max_rows = TABLE_MAX_ROWS;
     table->num_rows = pager->file_length / ROW_SIZE;
-
-    for(uint32_t i = 0; i < TABLE_MAX_PAGES; ++i)
-    {
-        pager->pages[i] = NULL;
-    }
+    table->pager    = pager;
 
     return table;
 }

@@ -77,15 +77,12 @@ void*  get_page(Pager* pager, uint32_t page_num);
  * Table - structure that points to pages of rows
    and keeps track of how many rows there are
 */
-
-// Actual table structure
 typedef struct 
 {
     uint32_t num_rows;
     uint32_t max_rows;
     Pager*   pager;
 } Table;
-
 
 Table* db_open(const char* filename);
 void   db_close(Table* table);

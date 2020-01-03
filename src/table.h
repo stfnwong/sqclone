@@ -86,7 +86,24 @@ typedef struct
 
 Table* db_open(const char* filename);
 void   db_close(Table* table);
-void*  row_slot(Table* table, uint32_t row_num);
+//void*  row_slot(Table* table, uint32_t row_num);
+
+
+/*
+ * Cursor
+ * Represents a location in a table.
+ */
+typedef struct 
+{
+    Table*   table;
+    uint32_t row_num;
+    int      end_of_table;  // this is a position one-past the last element
+} Cursor;
+
+Cursor* table_start(Table* table);
+Cursor* table_end(Table* table);
+void*   cursor_value(Cursor* cursor);
+void    cursor_advance(Cursor* cursor);
 
 
 #endif /*__SQ_TABLE_H*/

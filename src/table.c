@@ -36,6 +36,8 @@ const uint32_t PAGE_SIZE      = 4096;        // same as OS VM page size
 const uint32_t ROWS_PER_PAGE  = PAGE_SIZE / ROW_SIZE;
 const uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * TABLE_MAX_PAGES;
 
+// ================ ROW
+
 /*
  * print_page_info()
  */
@@ -81,6 +83,8 @@ void deserialize_row(void* src, Row* dst)
     memcpy(&(dst->username), src + USERNAME_OFFSET, USERNAME_SIZE);
     memcpy(&(dst->email), src + EMAIL_OFFSET, EMAIL_SIZE);
 }
+
+// ================ PAGER
 
 /*
  * pager_open()
@@ -184,6 +188,8 @@ void* get_page(Pager* pager, uint32_t page_num)
     return pager->pages[page_num];
 }
 
+// ================ TABLE
+
 /*
  * db_open()
  */
@@ -271,19 +277,77 @@ void db_close(Table* table)
     free(table);
 }
 
+
+
+// ================ CURSOR
+
 /*
- * row_slot()
+ * table_start()
+ */
+Cursor* table_start(Table* table)
+{
+    Cursor* cursor;
+
+    cursor = malloc(sizeof(Cursor));
+    if(!cursor)
+    {
+        fprintf(stderr, "[%s] failed to allocate memory for Cursor object\n", __func__);
+        return NULL;
+    }
+
+    cursor->table        = table;
+    cursor->row_num      = 0;
+    cursor->end_of_table = (table->num_rows == 0) ? 1 : 0;
+
+    return cursor;
+}
+
+/*
+ * table_end()
+ */
+Cursor* table_end(Table* table)
+{
+    Cursor* cursor;
+
+    cursor = malloc(sizeof(Cursor));
+    if(!cursor)
+    {
+        fprintf(stderr, "[%s] failed to allocate memory for Cursor object\n", __func__);
+        return NULL;
+    }
+
+    cursor->table        = table;
+    cursor->row_num      = table->num_rows;
+    cursor->end_of_table = 1;
+
+    return cursor;
+}
+
+/*
+ * cursor_value()
  * Figure out where to read/write in memory for a particular row 
  */
-void* row_slot(Table* table, uint32_t row_num)
+void* cursor_value(Cursor* cursor)
 {
-    uint32_t page_num, row_offset, byte_offset;
+    uint32_t page_num;
+    uint32_t row_offset;
+    uint32_t byte_offset;
     void* page;
 
-    page_num    = row_num / ROWS_PER_PAGE;
-    page        = get_page(table->pager, page_num);
-    row_offset  = row_num % ROWS_PER_PAGE;
+    page_num    = cursor->row_num / ROWS_PER_PAGE;
+    page        = get_page(cursor->table->pager, page_num);
+    row_offset  = cursor->row_num % ROWS_PER_PAGE;
     byte_offset = row_offset * ROW_SIZE;
 
     return page + byte_offset;
+}
+
+/*
+ * cursor_advance()
+ */
+void cursor_advance(Cursor* cursor)
+{
+    cursor->row_num++;
+    if(cursor->row_num >= cursor->table->num_rows)
+        cursor->end_of_table = 1;
 }

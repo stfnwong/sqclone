@@ -164,6 +164,9 @@ uint32_t* leaf_node_key(void* node, uint32_t cell_num);
 void*     leaf_node_value(void* node, uint32_t cell_num);
 void      init_leaf_node_value(void* node);
 void      leaf_node_insert(Cursor* cursor, uint32_t key, Row* value);
+void      print_leaf_node(void* node);
+
+void print_info(void);
 
 
 #endif /*__SQ_TABLE_H*/

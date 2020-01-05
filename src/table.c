@@ -412,3 +412,35 @@ void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
     *(leaf_node_key(node, cursor->cell_num)) = key;
     serialize_row(value, leaf_node_value(node, cursor->cell_num));
 }
+
+/*
+ * print_node()
+ */
+void print_leaf_node(void* node)
+{
+    uint32_t num_cells;
+
+    num_cells = (*leaf_node_num_cells(node));
+    fprintf(stdout, "[%s] leaf size: %d cells\n", __func__, num_cells);
+    fprintf(stdout, "    cell : key\n");
+
+    for(uint32_t i = 0; i < num_cells; ++i)
+    {
+        uint32_t key = *leaf_node_key(node, i);
+        fprintf(stdout, "   - %d : %d\n", i, key);
+    }
+}
+
+
+/*
+ * print_info()
+ */
+void print_info(void)
+{
+    fprintf(stdout, "ROW_SIZE                  : %ld\n", ROW_SIZE);
+    fprintf(stdout, "COMMON_NODE_HEADER_SIZE   : %ld\n",  COMMON_NODE_HEADER_SIZE);
+    fprintf(stdout, "LEAF_NODE_HEADER_SIZE     : %ld\n",  LEAF_NODE_HEADER_SIZE);
+    fprintf(stdout, "LEAF_NODE_CELL_SIZE       : %ld\n",  LEAF_NODE_CELL_SIZE);
+    fprintf(stdout, "LEAF_NODE_SPACE_FOR_CELLS : %ld\n",  LEAF_NODE_SPACE_FOR_CELLS);
+    fprintf(stdout, "LEAF_NODE_MAX_CELLS       : %ld\n",  LEAF_NODE_MAX_CELLS);
+}

@@ -77,6 +77,16 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table)
         close_input_buffer(input_buffer);
         exit(EXIT_SUCCESS);
     }
+    else if(strncmp(input_buffer->buffer, ".info", 5) == 0)
+    {
+        print_info();
+        return META_COMMAND_SUCCESS;
+    }
+    else if(strncmp(input_buffer->buffer, ".btree", 6) == 0)
+    {
+        print_leaf_node(get_page(table->pager, 0));
+        return META_COMMAND_SUCCESS;
+    }
     else
         return META_COMMAND_UNRECOGNIZED_COMMAND;
 }

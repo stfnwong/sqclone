@@ -56,6 +56,15 @@ void print_row(Row* row);
 void serialize_row(Row* src, void* dest);
 void deserialize_row(void* src, Row* dst);
 
+/*
+ * Tree Nodes
+ */
+uint32_t* leaf_node_num_cells(void* node);
+void*     leaf_node_cell(void* node, uint32_t cell_num);
+uint32_t* leaf_node_key(void* node, uint32_t cell_num);
+void*     leaf_node_value(void* node, uint32_t cell_num);
+void      init_leaf_node_value(void* node);
+
 
 /*
  * Pager
@@ -66,6 +75,7 @@ typedef struct
 {
     int      fd;     // file descriptor
     uint32_t file_length;
+    uint32_t num_pages;
     void*    pages[TABLE_MAX_PAGES];
 } Pager;
 
@@ -79,7 +89,7 @@ void*  get_page(Pager* pager, uint32_t page_num);
 */
 typedef struct 
 {
-    uint32_t num_rows;
+    uint32_t root_page_num;
     uint32_t max_rows;
     Pager*   pager;
 } Table;
@@ -95,7 +105,8 @@ void   db_close(Table* table);
 typedef struct 
 {
     Table*   table;
-    uint32_t row_num;
+    uint32_t page_num;
+    uint32_t cell_num;
     int      end_of_table;  // this is a position one-past the last element
 } Cursor;
 

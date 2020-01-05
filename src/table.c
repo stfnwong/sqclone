@@ -23,9 +23,9 @@
  */
 void print_page_info(void)
 {
-    fprintf(stdout, "ROW_SIZE        : %d\n", ROW_SIZE);
-    fprintf(stdout, "PAGE_SIZE       : %d\n", PAGE_SIZE);
-    fprintf(stdout, "TABLE_MAX_PAGES : %d\n", TABLE_MAX_PAGES);
+    fprintf(stdout, "ROW_SIZE        : %ld\n", ROW_SIZE);
+    fprintf(stdout, "PAGE_SIZE       : %d\n",  PAGE_SIZE);
+    fprintf(stdout, "TABLE_MAX_PAGES : %d\n",  TABLE_MAX_PAGES);
 }
 
 /*
@@ -69,38 +69,6 @@ typedef enum
     NODE_INTERNAL,
     NODE_LEAF
 } NodeType;
-
-
-/*
- * Leaf Node methods
- * All of these methods find elements in the B+Tree based on pointer offsets
- */
-uint32_t* leaf_node_num_cells(void* node)
-{
-    return node + LEAF_NODE_NUM_CELLS_OFFSET;
-}
-
-void* leaf_node_cell(void* node, uint32_t cell_num)
-{
-    return node + LEAF_NODE_HEADER_SIZE +
-        cell_num * LEAF_NODE_CELL_SIZE;
-}
-
-uint32_t* leaf_node_key(void* node, uint32_t cell_num)
-{
-    return leaf_node_cell(node, cell_num);
-}
-
-void* leaf_node_value(void* node, uint32_t cell_num)
-{
-    return leaf_node_cell(node, cell_num) + 
-        LEAF_NODE_KEY_SIZE;
-}
-
-void init_leaf_node_value(void* node)
-{
-    *leaf_node_num_cells(node) = 0;
-}
 
 
 // ================ PAGER
@@ -263,9 +231,8 @@ Table* db_open(const char* filename)
  */
 void db_close(Table* table)
 {
+    int result;
     Pager* pager;
-    uint32_t num_full_pages;
-    uint32_t num_extra_rows;
 
     pager = table->pager;
     for(uint32_t p = 0; p < pager->num_pages; ++p)
@@ -278,7 +245,7 @@ void db_close(Table* table)
         pager->pages[p] = NULL;
     }
 
-    int result = close(pager->fd);      // <- TODO : segfault here
+    result = close(pager->fd);
     if(result == -1)
     {
         fprintf(stdout, "[%s] Error closing db file\n", __func__);
@@ -380,6 +347,40 @@ void cursor_advance(Cursor* cursor)
         cursor->end_of_table = 1;
 }
 
+/*
+ * Leaf Node methods
+ * All of these methods find elements in the B+Tree based on pointer offsets
+ */
+uint32_t* leaf_node_num_cells(void* node)
+{
+    return node + LEAF_NODE_NUM_CELLS_OFFSET;
+}
+
+void* leaf_node_cell(void* node, uint32_t cell_num)
+{
+    return node + LEAF_NODE_HEADER_SIZE +
+        cell_num * LEAF_NODE_CELL_SIZE;
+}
+
+uint32_t* leaf_node_key(void* node, uint32_t cell_num)
+{
+    return leaf_node_cell(node, cell_num);
+}
+
+void* leaf_node_value(void* node, uint32_t cell_num)
+{
+    return leaf_node_cell(node, cell_num) + 
+        LEAF_NODE_KEY_SIZE;
+}
+
+void init_leaf_node_value(void* node)
+{
+    (*leaf_node_num_cells(node)) = 0;
+}
+
+/*
+ * leaf_node_insert()
+ */
 void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
 {
     void*    node;

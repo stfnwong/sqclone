@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "table.h"
 
 // Constants for Table structure
@@ -43,8 +44,6 @@ void print_page_info(void)
 {
     fprintf(stdout, "ROW_SIZE        : %d\n", ROW_SIZE);
     fprintf(stdout, "PAGE_SIZE       : %d\n", PAGE_SIZE);
-    fprintf(stdout, "ROWS_PER_PAGE   : %d\n", ROWS_PER_PAGE);
-    fprintf(stdout, "TABLE_MAX_ROWS  : %d\n", TABLE_MAX_ROWS);
     fprintf(stdout, "TABLE_MAX_PAGES : %d\n", TABLE_MAX_PAGES);
 }
 
@@ -181,9 +180,9 @@ Pager* pager_open(const char* filename)
     pager = malloc(sizeof(Pager));
     pager->fd = fd;
     pager->file_length = lseek(fd, 0, SEEK_END);
-    pager->num_pages   = (file_length / PAGE_SIZE);
+    pager->num_pages   = (pager->file_length / PAGE_SIZE);
 
-    if(file_length % PAGE_SIZE != 0)
+    if(pager->file_length % PAGE_SIZE != 0)
     {
         fprintf(stderr, "[%s] Corruption: DB file is a not a whole number of pages\n", __func__);
         return NULL;
@@ -295,7 +294,6 @@ Table* db_open(const char* filename)
                 __func__, filename);
         return NULL;
     }
-    table->max_rows      = TABLE_MAX_ROWS;
     table->root_page_num = 0;
     table->pager         = pager;
 
@@ -431,4 +429,36 @@ void cursor_advance(Cursor* cursor)
     cursor->cell_num++;
     if(cursor->cell_num >= (*leaf_node_num_cells(node)))
         cursor->end_of_table = 1;
+}
+
+void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
+{
+    void*    node;
+    uint32_t num_cells;
+
+    node      = get_page(cursor->table->pager, cursor->page_num);
+    num_cells = *leaf_node_num_cells(node);
+    // check if node is full
+    if(num_cells >= LEAF_NODE_MAX_CELLS)
+    {
+        fprintf(stdout, "[%s] Leaf not splitting not yet implemented\n", __func__);
+        return;
+    }
+
+    if(cursor->cell_num < num_cells)
+    {
+        // make room for a new cell
+        for(uint32_t i = 0; i < cursor->cell_num; ++i)
+        {
+            memcpy(
+               leaf_node_cell(node, i),
+               leaf_mode_cell(node, i-1),
+               LEAF_NODE_CELL_SIZE
+           );
+        }
+    }
+
+    *(leaf_node_num_cells(node)) += 1;
+    *(leaf_node_key(node, cursor->cell_num)) = key;
+    serialize_row(value, leaf_node_value(node, cursor->cell_num));
 }

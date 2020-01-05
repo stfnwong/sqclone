@@ -57,16 +57,6 @@ void serialize_row(Row* src, void* dest);
 void deserialize_row(void* src, Row* dst);
 
 /*
- * Tree Nodes
- */
-uint32_t* leaf_node_num_cells(void* node);
-void*     leaf_node_cell(void* node, uint32_t cell_num);
-uint32_t* leaf_node_key(void* node, uint32_t cell_num);
-void*     leaf_node_value(void* node, uint32_t cell_num);
-void      init_leaf_node_value(void* node);
-
-
-/*
  * Pager
  * Object that accesses the cache and file. Tables make 
  * requests for pages through the pager.
@@ -80,7 +70,7 @@ typedef struct
 } Pager;
 
 Pager* pager_open(const char* filename);
-void   pager_flush(Pager* pager, uint32_t page_num, uint32_t size);
+void   pager_flush(Pager* pager, uint32_t page_num);
 void*  get_page(Pager* pager, uint32_t page_num);
 
 /* 
@@ -90,7 +80,7 @@ void*  get_page(Pager* pager, uint32_t page_num);
 typedef struct 
 {
     uint32_t root_page_num;
-    uint32_t max_rows;
+    //uint32_t max_rows;
     Pager*   pager;
 } Table;
 
@@ -114,6 +104,16 @@ Cursor* table_start(Table* table);
 Cursor* table_end(Table* table);
 void*   cursor_value(Cursor* cursor);
 void    cursor_advance(Cursor* cursor);
+
+/*
+ * Tree Nodes
+ */
+uint32_t* leaf_node_num_cells(void* node);
+void*     leaf_node_cell(void* node, uint32_t cell_num);
+uint32_t* leaf_node_key(void* node, uint32_t cell_num);
+void*     leaf_node_value(void* node, uint32_t cell_num);
+void      init_leaf_node_value(void* node);
+void      leaf_node_insert(Cursor* cursor, uint32_t key, Row* value);
 
 
 #endif /*__SQ_TABLE_H*/

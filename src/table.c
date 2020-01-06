@@ -179,7 +179,7 @@ void* get_page(Pager* pager, uint32_t page_num)
         }
         pager->pages[page_num] = page;
 
-        if(page_num > pager->num_pages)
+        if(page_num >= pager->num_pages)
             pager->num_pages = page_num + 1;
     }
 
@@ -235,6 +235,8 @@ void db_close(Table* table)
     Pager* pager;
 
     pager = table->pager;
+    // Write out all the pages 
+    // TODO : what happens if there are zero pages?
     for(uint32_t p = 0; p < pager->num_pages; ++p)
     {
         if(pager->pages[p] == NULL)
@@ -245,6 +247,7 @@ void db_close(Table* table)
         pager->pages[p] = NULL;
     }
 
+    // Close the file descriptor
     result = close(pager->fd);
     if(result == -1)
     {
@@ -422,7 +425,7 @@ void print_leaf_node(void* node)
 
     num_cells = (*leaf_node_num_cells(node));
     fprintf(stdout, "[%s] leaf size: %d cells\n", __func__, num_cells);
-    fprintf(stdout, "    cell : key\n");
+    fprintf(stdout, "   cell | key\n");
 
     for(uint32_t i = 0; i < num_cells; ++i)
     {

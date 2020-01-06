@@ -12,6 +12,14 @@
 #include "table.h"
 
 /*
+ * repl_print_prompt()
+ */
+void repl_print_prompt(void)
+{
+    fprintf(stdout, "db > ");
+}
+
+/*
  * new_input_buffer()
  */
 InputBuffer* new_input_buffer(void)

@@ -17,13 +17,6 @@
 #include "table.h"
 
 
-/*
- * print_prompt()
- */
-void print_prompt(void)
-{
-    fprintf(stdout, "db > ");
-}
 
 
 // Entry point
@@ -51,7 +44,7 @@ int main(int argc, char *argv[])
 
     while(1)
     {
-        print_prompt();
+        repl_print_prompt();
         read_input(input_buffer);
 
         // Commands start with '.' character

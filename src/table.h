@@ -166,6 +166,7 @@ void      init_leaf_node_value(void* node);
 void      leaf_node_insert(Cursor* cursor, uint32_t key, Row* value);
 void      print_leaf_node(void* node);
 
+// Print leaf node info
 void print_info(void);
 
 

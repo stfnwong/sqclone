@@ -122,13 +122,35 @@ typedef struct
 } Cursor;
 
 Cursor* table_start(Table* table);
-Cursor* table_end(Table* table);
+Cursor* table_find(Table* table, uint32_t key);
 void*   cursor_value(Cursor* cursor);
 void    cursor_advance(Cursor* cursor);
 
+// TODO : I think that there should be a type here that 
+// contains a void* (the blob) for debugging purposes.
+// for example:
+//
+// typedef struct 
+// {
+//     uint8_t  node_type;
+//     uint8_t  is_root;
+//     uint32_t parent_pointer;
+//     void* data;
+//
+// } CommonNode;
+// 
+// ... and so on..
 /*
  * Common Node Header Layout
  */
+
+// ================ TREE NODES
+typedef enum
+{
+    NODE_INTERNAL,
+    NODE_LEAF
+} NodeType;
+
 #define NODE_TYPE_SIZE           sizeof(uint8_t)
 #define NODE_TYPE_OFFSET         0
 #define IS_ROOT_SIZE             sizeof(uint8_t)
@@ -164,6 +186,9 @@ uint32_t* leaf_node_key(void* node, uint32_t cell_num);
 void*     leaf_node_value(void* node, uint32_t cell_num);
 void      init_leaf_node_value(void* node);
 void      leaf_node_insert(Cursor* cursor, uint32_t key, Row* value);
+Cursor*   leaf_node_find(Table* table, uint32_t page_num, uint32_t key);
+NodeType  get_node_type(void* node);
+void      set_node_type(void* node, NodeType type);
 void      print_leaf_node(void* node);
 
 // Print leaf node info

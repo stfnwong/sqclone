@@ -63,14 +63,6 @@ void deserialize_row(void* src, Row* dst)
 }
 
 
-// ================ TREE NODES
-typedef enum
-{
-    NODE_INTERNAL,
-    NODE_LEAF
-} NodeType;
-
-
 // ================ PAGER
 
 /*
@@ -236,7 +228,6 @@ void db_close(Table* table)
 
     pager = table->pager;
     // Write out all the pages 
-    // TODO : what happens if there are zero pages?
     for(uint32_t p = 0; p < pager->num_pages; ++p)
     {
         if(pager->pages[p] == NULL)
@@ -299,28 +290,23 @@ Cursor* table_start(Table* table)
 }
 
 /*
- * table_end()
+ * table_find()
+ * Return the position of the node given by key if it exists, else
+ * return the position where the node given by key should be 
+ * inserted.
  */
-Cursor* table_end(Table* table)
+Cursor* table_find(Table* table, uint32_t key)
 {
     void* root_node;
-    Cursor* cursor;
 
-    cursor = malloc(sizeof(Cursor));
-    if(!cursor)
+    root_node = get_page(table->pager, table->root_page_num);
+    if(get_node_type(root_node) == NODE_LEAF)
+        return leaf_node_find(table, table->root_page_num, key);
+    else
     {
-        fprintf(stderr, "[%s] failed to allocate memory for Cursor object\n", __func__);
+        fprintf(stdout, "[%s] Need to implement searching an internal node\n", __func__);
         return NULL;
     }
-
-    cursor->table        = table;
-    cursor->page_num     = table->root_page_num;
-    cursor->end_of_table = 1;
-
-    root_node        = get_page(table->pager, table->root_page_num);
-    cursor->cell_num = *leaf_node_num_cells(root_node);
-
-    return cursor;
 }
 
 /*
@@ -378,6 +364,7 @@ void* leaf_node_value(void* node, uint32_t cell_num)
 
 void init_leaf_node_value(void* node)
 {
+    set_node_type(node, NODE_LEAF);
     (*leaf_node_num_cells(node)) = 0;
 }
 
@@ -415,6 +402,75 @@ void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
     *(leaf_node_key(node, cursor->cell_num)) = key;
     serialize_row(value, leaf_node_value(node, cursor->cell_num));
 }
+
+/*
+ * leaf_node_find()
+ */
+Cursor* leaf_node_find(Table* table, uint32_t page_num, uint32_t key)
+{
+    Cursor*  cursor;
+    void*    node;
+    uint32_t num_cells;
+
+    node = get_page(table->pager, page_num);
+    cursor = malloc(sizeof(Cursor));
+    if(!cursor)
+    {
+        fprintf(stderr, "[%s] failed to allocate memory for Cursor object\n", __func__);
+        return NULL;
+    }
+    num_cells = (*leaf_node_num_cells(node));
+
+    cursor->table    = table;
+    cursor->page_num = page_num;
+
+    // Do a binary search over the leaf node
+    uint32_t min_idx, one_past_max_idx;
+
+    min_idx = 0;
+    one_past_max_idx = num_cells;
+
+    while(one_past_max_idx != min_idx)
+    {
+        uint32_t idx = (min_idx + one_past_max_idx) / 2;
+        uint32_t key_at_idx = (*leaf_node_key(node, idx));
+        if(key == key_at_idx)
+        {
+            cursor->cell_num = idx;
+            return cursor;
+        }
+
+        if(key < key_at_idx)
+            one_past_max_idx = idx;
+        else
+            min_idx++;
+    }
+    cursor->cell_num =  min_idx;
+
+    return cursor;
+}
+
+/*
+ * get_node_type()
+ */
+NodeType get_node_type(void* node)
+{
+    uint8_t value = *((uint8_t*)(node + NODE_TYPE_OFFSET));
+
+    return (NodeType) value;
+}
+
+/*
+ * set_node_type()
+ */
+void set_node_type(void* node, NodeType type)
+{
+    uint8_t value;
+
+    value = (uint8_t) type;
+    *((uint8_t*)(node + NODE_TYPE_OFFSET)) = value;
+}
+
 
 /*
  * print_node()

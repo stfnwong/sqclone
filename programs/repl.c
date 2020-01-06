@@ -17,8 +17,6 @@
 #include "table.h"
 
 
-
-
 // Entry point
 int main(int argc, char *argv[])
 {
@@ -90,6 +88,10 @@ int main(int argc, char *argv[])
         {
             case EXECUTE_SUCCESS:
                 fprintf(stdout, "Executed [%s]\n", input_buffer->buffer);
+                break;
+                
+            case EXECUTE_DUPLICATE_KEY:
+                fprintf(stdout, "ERROR: Duplicate key in command [%s]\n", input_buffer->buffer);
                 break;
 
             case EXECUTE_TABLE_FULL:

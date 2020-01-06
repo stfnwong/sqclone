@@ -355,5 +355,9 @@ spec("table")
         exec_result = execute_statement(&statement, table);
         fprintf(stdout, "[%s] got exec_result : %d\n", __func__, exec_result);
         check(exec_result == EXECUTE_DUPLICATE_KEY);
+
+        // Clean up
+        close_input_buffer(input_buffer);
+        db_close(table);
     }
 }

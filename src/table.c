@@ -376,8 +376,11 @@ void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
     void*    node;
     uint32_t num_cells;
 
+    // DEBUG 
+    fprintf(stdout, "[%s] inserting key [%d]\n", __func__, key);
+
     node      = get_page(cursor->table->pager, cursor->page_num);
-    num_cells = *leaf_node_num_cells(node);
+    num_cells = (*leaf_node_num_cells(node));
     // check if node is full
     if(num_cells >= LEAF_NODE_MAX_CELLS)
     {

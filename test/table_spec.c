@@ -308,4 +308,52 @@ spec("table")
         close_input_buffer(input_buffer);
         db_close(table);
     }
+
+    it("rejects entries with duplicate keys")
+    {
+        char*         input;
+        Table*        table;
+        Statement     statement;
+        PrepareResult prep_result;
+        ExecuteResult exec_result;
+        InputBuffer*  input_buffer;
+
+        // Get a new table
+        table = db_open(test_db_name);
+        check(table != NULL);
+        // TODO : check number of records
+
+        // Allocate input here to avoid double-free
+        input = malloc(sizeof(char) * 256);
+        check(input != NULL);
+
+        // get a new input buffer
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        // Insert some invalid data
+        strcpy(input, "insert 1 user1 user1@domain.net");
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_SUCCESS);
+        exec_result = execute_statement(&statement, table);
+        check(exec_result == EXECUTE_SUCCESS);
+
+        // If we try to insert a new record with the same key we should get an error
+        strcpy(input, "insert 1 user2 user2@domain.net");
+        input_buffer->buffer = input;
+        fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
+                __func__, input_buffer->buffer
+        );
+
+        prep_result = prepare_statement(input_buffer, &statement);
+        check(prep_result == PREPARE_SUCCESS);
+        exec_result = execute_statement(&statement, table);
+        fprintf(stdout, "[%s] got exec_result : %d\n", __func__, exec_result);
+        check(exec_result == EXECUTE_DUPLICATE_KEY);
+    }
 }

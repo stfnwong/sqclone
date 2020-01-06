@@ -166,7 +166,7 @@ ExecuteResult execute_insert(Statement* statement, Table* table)
     void*    node;
     uint32_t num_cells;
 
-    node = get_page(table->pager, table->root_page_num);
+    node      = get_page(table->pager, table->root_page_num);
     num_cells = (*leaf_node_num_cells(node));
     if(num_cells >= LEAF_NODE_MAX_CELLS)
     {
@@ -177,10 +177,16 @@ ExecuteResult execute_insert(Statement* statement, Table* table)
     Cursor*  cursor;
     uint32_t key_to_insert;
 
-    cursor        = table_find(table, key_to_insert);
     row_to_insert = &(statement->row_to_insert);
+    key_to_insert = row_to_insert->id;
+    cursor        = table_find(table, key_to_insert);
     
     // Check for duplicates
+    // TODO : debug, remove
+    fprintf(stdout, "[%s] cursor->cell_num = %d, num_cells = %d\n",
+            __func__, cursor->cell_num, num_cells
+    );
+
     if(cursor->cell_num < num_cells)
     {
         uint32_t key_at_index = (*leaf_node_key(node, cursor->cell_num));

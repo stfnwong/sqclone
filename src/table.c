@@ -178,6 +178,16 @@ void* get_page(Pager* pager, uint32_t page_num)
     return pager->pages[page_num];
 }
 
+/*
+ * get_unused_page_num()
+ * Until we implement page recycling new pages will always go 
+ * on the end of the database.
+ */
+uint32_t get_unused_page_num(Pager* pager)
+{
+    return pager->num_pages;
+}
+
 // ================ TABLE
 
 /*
@@ -212,7 +222,7 @@ Table* db_open(const char* filename)
         void* root_node;
 
         root_node = get_page(pager, 0);
-        init_leaf_node_value(root_node);
+        init_leaf_node(root_node);
     }
 
     return table;
@@ -362,9 +372,10 @@ void* leaf_node_value(void* node, uint32_t cell_num)
         LEAF_NODE_KEY_SIZE;
 }
 
-void init_leaf_node_value(void* node)
+void init_leaf_node(void* node)
 {
     set_node_type(node, NODE_LEAF);
+    set_node_root(node, 0);
     (*leaf_node_num_cells(node)) = 0;
 }
 
@@ -376,15 +387,12 @@ void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
     void*    node;
     uint32_t num_cells;
 
-    // DEBUG 
-    fprintf(stdout, "[%s] inserting key [%d]\n", __func__, key);
-
     node      = get_page(cursor->table->pager, cursor->page_num);
     num_cells = (*leaf_node_num_cells(node));
     // check if node is full
     if(num_cells >= LEAF_NODE_MAX_CELLS)
     {
-        fprintf(stdout, "[%s] Leaf not splitting not yet implemented\n", __func__);
+        leaf_node_split_and_insert(cursor, key, value);
         return;
     }
 
@@ -404,6 +412,68 @@ void leaf_node_insert(Cursor* cursor, uint32_t key, Row* value)
     *(leaf_node_num_cells(node)) += 1;
     *(leaf_node_key(node, cursor->cell_num)) = key;
     serialize_row(value, leaf_node_value(node, cursor->cell_num));
+}
+
+/*
+ * leaf_node_split_and_insert()
+ */
+void leaf_node_split_and_insert(Cursor* cursor, uint32_t key, Row* value)
+{
+    // Create a new node and move half of the cells over. 
+    // Insert the new value into one of two nodes. Update
+    // parent or create new parent.
+
+    void*    old_node;
+    void*    new_node;
+    uint32_t new_page_num;
+
+    old_node     = get_page(cursor->table->pager, cursor->page_num);
+    new_page_num = get_unused_page_num(cursor->table->pager);
+    new_node     = get_page(cursor->table->pager, new_page_num);
+
+    // Now we divide all existing keys evenly between old (left) 
+    // and new (right) nodes. Starting from the right, move each
+    // key to correct position.
+
+    uint32_t idx_within_node;
+    for(int32_t i = LEAF_NODE_MAX_CELLS; i >= 0; --i)
+    {
+        void* dest_node;
+
+        if(i >= LEAF_NODE_LEFT_SPLIT_COUNT)
+            dest_node = new_node;
+        else
+            dest_node = old_node;
+
+        idx_within_node = i % LEAF_NODE_LEFT_SPLIT_COUNT;
+        void* dest = leaf_node_cell(dest_node, idx_within_node);
+
+        if(i == cursor->cell_num)
+            serialize_row(value, dest);
+        else if(i > cursor->cell_num)
+            memcpy(dest, leaf_node_cell(old_node, i - 1), LEAF_NODE_CELL_SIZE);
+        else
+            memcpy(dest, leaf_node_cell(old_node, i), LEAF_NODE_CELL_SIZE);
+    }
+
+    // Update node counts on both leaf nodes
+    *(leaf_node_num_cells(old_node)) = LEAF_NODE_LEFT_SPLIT_COUNT;
+    *(leaf_node_num_cells(new_node)) = LEAF_NODE_RIGHT_SPLIT_COUNT;
+
+    // Update the nodes parent. If the original node was the root 
+    // then it had no parent. In this case, we create a new root
+    // node to act as the parent.
+
+    // TODO : note that this is just a stub
+    if(is_node_root(old_node))
+        return create_new_root(cursor->table, new_page_num);
+    else
+    {
+        fprintf(stdout, "[%s] Updating parent after split not yet implemented\n",
+                __func__);
+        return ;
+    }
+
 }
 
 /*
@@ -474,6 +544,53 @@ void set_node_type(void* node, NodeType type)
     *((uint8_t*)(node + NODE_TYPE_OFFSET)) = value;
 }
 
+/*
+ * set_node_root()
+ */
+void set_node_root(void* node, uint8_t is_root)
+{
+    *((uint8_t*)(node + IS_ROOT_OFFSET)) = is_root;
+}
+
+/*
+ * is_node_root()
+ */
+uint8_t is_node_root(void* node)
+{
+    uint8_t value;
+
+    value = *((uint8_t*)(node + IS_ROOT_OFFSET));
+    
+    return value;
+}
+
+
+/*
+ * create_new_root()
+ */
+void create_new_root(Table* table, uint32_t right_child_page_num)
+{
+    // Handle splitting the root node.
+    // Copy old root to new page, this becomes the left child.
+    // Address of right child is passed as parameter
+    // Re-init the root page to contain the root node.
+    // New root node points to two children.
+
+    void* root;
+    void* right_child;
+    void* left_child;
+    uint32_t left_child_page_num;
+
+    root        = get_page(table->pager, table->root_page_num);
+    right_child = get_page(table->pager, right_child_page_num);
+    left_child_page_num = get_unused_page_num(table->pager);
+    left_child  = get_page(table->pager, left_child_page_num);
+
+    // left child has data copied from old root
+    memcpy(left_child, root, PAGE_SIZE);
+    set_node_root(left_child, 1);        // can go back and use stdbool
+}
+
 
 /*
  * print_node()
@@ -493,6 +610,103 @@ void print_leaf_node(void* node)
     }
 }
 
+
+/*
+ * Internal nodes
+ */
+// Header layout
+#define INTERNAL_NODE_NUM_KEYS_SIZE    sizeof(uint32_t)
+#define INTERNAL_NODE_NUM_KEYS_OFFSET  COMMON_NODE_HEADER_SIZE
+#define INTERNAL_NODE_RIGHT_CHILD_SIZE sizeof(uint32_t)
+#define INTERNAL_NODE_RIGHT_CHILD_OFFSET (INTERNAL_NODE_NUM_KEYS_OFFSET + INTERNAL_NODE_NUM_KEYS_SIZE)
+#define INTERNAL_NODE_HEADER_SIZE (COMMON_NODE_HEADER_SIZE + INTERNAL_NODE_NUM_KEYS_SIZE + INTERNAL_NODE_RIGHT_CHILD_SIZE)
+
+// Body layout
+#define INTERNAL_NODE_KEY_SIZE   sizeof(uint32_t)
+#define INTERNAL_NODE_CHILD_SIZE sizeof(uint32_t)
+#define INTERNAL_NODE_CELL_SIZE  (INTERNAL_NODE_CHILD_SIZE + INTERNAL_NODE_KEY_SIZE)
+
+// Methods for accessing internal node structures
+/*
+ * internal_node_num_keys()
+ */
+uint32_t* internal_node_num_keys(void* node)
+{
+    return node + INTERNAL_NODE_NUM_KEYS_OFFSET;
+}
+
+/*
+ * internal_node_right_child()
+ */
+uint32_t* internal_node_right_child(void* node)
+{
+    return node + INTERNAL_NODE_RIGHT_CHILD_OFFSET;
+}
+
+/* 
+ * internal_node_cell()
+ */
+uint32_t* internal_node_cell(void* node, uint32_t cell_num)
+{
+    return node + INTERNAL_NODE_HEADER_SIZE + cell_num * INTERNAL_NODE_CELL_SIZE;
+}
+
+/*
+ * internal_node_child()
+ */
+uint32_t* internal_node_child(void* node, uint32_t child_num)
+{
+    uint32_t num_keys;
+
+    num_keys = (*internal_node_num_keys(node));
+    if(child_num > num_keys)
+    {
+        fprintf(stdout, "[%s] tried to access child %d in node with %d keys\n",
+                __func__, child_num, num_keys);
+        return NULL;
+    }
+    else if(child_num == num_keys)
+        return internal_node_right_child(node);
+    else
+        return internal_node_cell(node, child_num);
+}
+
+/*
+ * internal_node_key()
+ */
+uint32_t* internal_node_key(void* node, uint32_t key_num)
+{
+    return internal_node_cell(node, key_num) + INTERNAL_NODE_CHILD_SIZE;
+}
+
+
+/*
+ * init_internal_node()
+ */
+void init_internal_node(void* node)
+{
+    set_node_type(node, NODE_INTERNAL);
+    set_node_root(node, 0);
+    *internal_node_num_keys(node) = 0;
+}
+
+/*
+ * get_node_max_key()
+ */
+uint32_t get_node_max_key(void* node)
+{
+    switch(get_node_type(node))
+    {
+        case NODE_INTERNAL:
+            return *internal_node_key(node, *internal_node_num_keys(node) - 1);
+        case NODE_LEAF:
+            return *leaf_node_key(node, *leaf_node_num_cells(node) - 1);
+        default:
+            // Should never get this
+            fprintf(stderr, "[%s] invalid node type %d\n",
+                    __func__, get_node_type(node));
+    }
+}
 
 /*
  * print_info()

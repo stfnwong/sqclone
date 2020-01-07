@@ -90,9 +90,10 @@ typedef struct
     void*    pages[TABLE_MAX_PAGES];
 } Pager;
 
-Pager* pager_open(const char* filename);
-void   pager_flush(Pager* pager, uint32_t page_num);
-void*  get_page(Pager* pager, uint32_t page_num);
+Pager*   pager_open(const char* filename);
+void     pager_flush(Pager* pager, uint32_t page_num);
+void*    get_page(Pager* pager, uint32_t page_num);
+uint32_t get_unused_page_num(Pager* pager);
 
 /* 
  * Table - structure that points to pages of rows
@@ -176,20 +177,41 @@ typedef enum
 #define LEAF_NODE_SPACE_FOR_CELLS (PAGE_SIZE - LEAF_NODE_HEADER_SIZE)
 #define LEAF_NODE_MAX_CELLS       (LEAF_NODE_SPACE_FOR_CELLS / LEAF_NODE_CELL_SIZE)
 
+// Leaf Node Sizes
+#define LEAF_NODE_RIGHT_SPLIT_COUNT (LEAF_NODE_MAX_CELLS + 1) / 2
+#define LEAF_NODE_LEFT_SPLIT_COUNT  (LEAF_NODE_MAX_CELLS + 1) - LEAF_NODE_RIGHT_SPLIT_COUNT
+
 
 /*
- * Tree Nodes
+ * Leaf Nodes
  */
 uint32_t* leaf_node_num_cells(void* node);
 void*     leaf_node_cell(void* node, uint32_t cell_num);
 uint32_t* leaf_node_key(void* node, uint32_t cell_num);
 void*     leaf_node_value(void* node, uint32_t cell_num);
-void      init_leaf_node_value(void* node);
+void      init_leaf_node(void* node);
 void      leaf_node_insert(Cursor* cursor, uint32_t key, Row* value);
+void      leaf_node_split_and_insert(Cursor* cursor, uint32_t key, Row* value);
 Cursor*   leaf_node_find(Table* table, uint32_t page_num, uint32_t key);
 NodeType  get_node_type(void* node);
 void      set_node_type(void* node, NodeType type);
+void      set_node_root(void* node, uint8_t is_root);
+uint8_t   is_node_root(void* node);
+void      create_new_root(Table* table, uint32_t right_child_page_num);
 void      print_leaf_node(void* node);
+
+/*
+ * Internal nodes
+ */
+uint32_t* internal_node_num_keys(void* node);
+uint32_t* internal_node_right_child(void* node);
+uint32_t* internal_node_cell(void* node, uint32_t cell_num);
+uint32_t* internal_node_child(void* node, uint32_t child_num);
+uint32_t* internal_node_key(void* node, uint32_t key_num);
+void      init_internal_node(void* node);
+
+uint32_t get_node_max_key(void* node);
+
 
 // Print leaf node info
 void print_info(void);

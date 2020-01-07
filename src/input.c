@@ -168,6 +168,8 @@ ExecuteResult execute_insert(Statement* statement, Table* table)
 
     node      = get_page(table->pager, table->root_page_num);
     num_cells = (*leaf_node_num_cells(node));
+
+    // TODO: remove this 
     if(num_cells >= LEAF_NODE_MAX_CELLS)
     {
         return EXECUTE_TABLE_FULL;
@@ -182,11 +184,6 @@ ExecuteResult execute_insert(Statement* statement, Table* table)
     cursor        = table_find(table, key_to_insert);
     
     // Check for duplicates
-    // TODO : debug, remove
-    fprintf(stdout, "[%s] cursor->cell_num = %d, num_cells = %d\n",
-            __func__, cursor->cell_num, num_cells
-    );
-
     if(cursor->cell_num < num_cells)
     {
         uint32_t key_at_index = (*leaf_node_key(node, cursor->cell_num));

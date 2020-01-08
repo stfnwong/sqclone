@@ -1,5 +1,8 @@
 # SQLITE CLONE 
-This is a clone of SQLite3 in C. I am following along from here (https://cstack.github.io/db_tutorial/), so its not really my own original work.
+This is a clone of SQLite3 in C. I am following along from here (https://cstack.github.io/db_tutorial/).
+
+# Future work
+While using `void*` blobs and having offsets is surely quite fast, it does make some aspects of debugging and reasoning a bit awkward. Once all the main parts are in place it would be good to write a version where the nodes in the B+trees are typed and compare that to the `void*` + offset implementation here.
 
 
 

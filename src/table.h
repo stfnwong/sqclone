@@ -102,7 +102,6 @@ uint32_t get_unused_page_num(Pager* pager);
 typedef struct 
 {
     uint32_t root_page_num;
-    //uint32_t max_rows;
     Pager*   pager;
 } Table;
 
@@ -208,9 +207,14 @@ uint32_t* internal_node_right_child(void* node);
 uint32_t* internal_node_cell(void* node, uint32_t cell_num);
 uint32_t* internal_node_child(void* node, uint32_t child_num);
 uint32_t* internal_node_key(void* node, uint32_t key_num);
+Cursor*   internal_node_find(Table* table, uint32_t page_num, uint32_t key);
 void      init_internal_node(void* node);
 
-uint32_t get_node_max_key(void* node);
+/*
+ * General for all nodes
+ */
+uint32_t  get_node_max_key(void* node);
+uint32_t* node_parent(void* node);
 
 
 // Print leaf node info

@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include "table.h"
 
+// REPL prompt
+void repl_print_prompt(void);
+
 // Input buffer structure
 typedef struct 
 {

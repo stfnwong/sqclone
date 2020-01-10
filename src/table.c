@@ -313,10 +313,7 @@ Cursor* table_find(Table* table, uint32_t key)
     if(get_node_type(root_node) == NODE_LEAF)
         return leaf_node_find(table, table->root_page_num, key);
     else
-    {
-        fprintf(stdout, "[%s] Need to implement searching an internal node\n", __func__);
-        return NULL;
-    }
+        return internal_node_find(table, table->root_page_num, key);
 }
 
 /*
@@ -325,7 +322,6 @@ Cursor* table_find(Table* table, uint32_t key)
  */
 void* cursor_value(Cursor* cursor)
 {
-    uint32_t page_num;
     void* page;
 
     page = get_page(cursor->table->pager, cursor->page_num);
@@ -589,6 +585,17 @@ void create_new_root(Table* table, uint32_t right_child_page_num)
     // left child has data copied from old root
     memcpy(left_child, root, PAGE_SIZE);
     set_node_root(left_child, 1);        // can go back and use stdbool
+
+    // Root node is a new internal node with one key and two children.
+    init_internal_node(root);
+    set_node_root(root, 1);
+    (*internal_node_num_keys(root)) = 1;
+    (*internal_node_child(root, 0)) = left_child_page_num;
+    uint32_t left_child_max_key = get_node_max_key(left_child);
+    *internal_node_key(root, 0)  = left_child_max_key;
+    *internal_node_right_child(root) = right_child_page_num;
+    (*node_parent(left_child))  = table->root_page_num;
+    (*node_parent(right_child)) = table->root_page_num;
 }
 
 
@@ -679,6 +686,52 @@ uint32_t* internal_node_key(void* node, uint32_t key_num)
     return internal_node_cell(node, key_num) + INTERNAL_NODE_CHILD_SIZE;
 }
 
+/*
+ * internal_node_find()
+ */
+Cursor* internal_node_find(Table* table, uint32_t page_num, uint32_t key)
+{
+    void*    node;
+    void*    child;
+    uint32_t num_keys;
+    uint32_t min_idx;
+    uint32_t max_idx;
+    uint32_t child_num;
+
+    node     = get_page(table->pager, page_num);
+    num_keys = (*internal_node_num_keys(node));
+    min_idx  = 0;
+    max_idx  = num_keys;
+
+    // Binary search to find the index of the child to search
+    while(max_idx != min_idx)
+    {
+        uint32_t idx = (min_idx + max_idx) / 2;
+        uint32_t right_key = (*internal_node_key(node, idx));
+        if(right_key >= key)
+            max_idx = idx;
+        else
+            min_idx++;
+    }
+
+    // Note also that the child of an internal node can be either a leaf
+    // node or another internal node. 
+    child_num = (*internal_node_child(node, min_idx));
+    child     = get_page(table->pager, child_num);
+
+    switch(get_node_type(child))
+    {
+        case NODE_LEAF:
+            return leaf_node_find(table, child_num, key);
+        case NODE_INTERNAL:
+            return internal_node_find(table, child_num, key);
+        default:
+            // If we get here, we are stuffed
+            fprintf(stderr, "[%s] invalide node type [%d]\n", __func__, get_node_type(child));
+            return NULL;
+    }
+}
+
 
 /*
  * init_internal_node()
@@ -705,7 +758,16 @@ uint32_t get_node_max_key(void* node)
             // Should never get this
             fprintf(stderr, "[%s] invalid node type %d\n",
                     __func__, get_node_type(node));
+            return (uint32_t)(-1);
     }
+}
+
+/*
+ * node_parent()
+ */
+uint32_t* node_parent(void* node)
+{
+    return node + PARENT_POINTER_OFFSET;
 }
 
 /*

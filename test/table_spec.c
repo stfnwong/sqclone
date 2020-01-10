@@ -360,4 +360,55 @@ spec("table")
         close_input_buffer(input_buffer);
         db_close(table);
     }
+
+    // In effect, this just inserts 64 elements
+    it("inserts multiple nodes by searching the internal btree")
+    {
+        int           num_rows;
+        char*         input;
+        Table*        table;
+        Statement     statement;
+        PrepareResult prep_result;
+        ExecuteResult exec_result;
+        InputBuffer*  input_buffer;
+
+        input = malloc(sizeof(char) * 256);
+        check(input != NULL);
+
+        // Get a table
+        table = db_open(test_db_name);
+        check(table != NULL);
+
+        // Get a buffer for commands
+        input_buffer = new_input_buffer();
+        check(input_buffer != NULL);
+
+        num_rows = 128;
+        fprintf(stdout, "[%s] inserting %d rows into table...\n", __func__, num_rows);
+        // Create new rows until the table is full
+        int exp_max_row = 1300;     // 13 rows per page, 100 pages per table
+
+        for(int row = 0; row < num_rows; ++row)
+        {
+            sprintf(input, "insert %d user%d, email%d@domain.net", row, row, row);
+            input_buffer->buffer = input;
+            prep_result = prepare_statement(input_buffer, &statement);
+            check(prep_result == PREPARE_SUCCESS);
+            exec_result = execute_statement(&statement, table);
+
+            // Check the expected exec_result here 
+            if(row < exp_max_row)
+            {
+                it("should return success")
+                    check(exec_result == EXECUTE_SUCCESS);
+            }
+            else
+            {
+                it("should return full")
+                    check(exec_result == EXECUTE_TABLE_FULL);
+            }
+        }
+
+        //fprintf(stdout, "[%s] inserted %d rows into table\n", __func__, row);
+    }
 }

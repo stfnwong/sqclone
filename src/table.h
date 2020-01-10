@@ -105,4 +105,13 @@ void*   cursor_value(Cursor* cursor);
 void    cursor_advance(Cursor* cursor);
 
 
+/*
+ * Internal Node Structure
+ */
+typedef struct
+{
+
+} InternalNode;
+
+
 #endif /*__SQ_TABLE_H*/

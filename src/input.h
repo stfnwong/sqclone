@@ -11,6 +11,9 @@
 #include <unistd.h>
 #include "table.h"
 
+// REPL prompt
+void repl_print_prompt(void);
+
 // Input buffer structure
 typedef struct 
 {
@@ -62,6 +65,7 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
 typedef enum 
 {
     EXECUTE_SUCCESS,
+    EXECUTE_DUPLICATE_KEY,
     EXECUTE_TABLE_FULL
 } ExecuteResult;
 

@@ -12,6 +12,14 @@
 #include "table.h"
 
 /*
+ * repl_print_prompt()
+ */
+void repl_print_prompt(void)
+{
+    fprintf(stdout, "db > ");
+}
+
+/*
  * new_input_buffer()
  */
 InputBuffer* new_input_buffer(void)
@@ -76,6 +84,16 @@ MetaCommandResult do_meta_command(InputBuffer* input_buffer, Table* table)
         db_close(table);
         close_input_buffer(input_buffer);
         exit(EXIT_SUCCESS);
+    }
+    else if(strncmp(input_buffer->buffer, ".info", 5) == 0)
+    {
+        print_info();
+        return META_COMMAND_SUCCESS;
+    }
+    else if(strncmp(input_buffer->buffer, ".btree", 6) == 0)
+    {
+        print_leaf_node(get_page(table->pager, 0));
+        return META_COMMAND_SUCCESS;
     }
     else
         return META_COMMAND_UNRECOGNIZED_COMMAND;
@@ -145,18 +163,39 @@ PrepareResult prepare_statement(InputBuffer* input_buffer, Statement* statement)
  */
 ExecuteResult execute_insert(Statement* statement, Table* table)
 {
-    if(table->num_rows >= table->max_rows)
+    void*    node;
+    uint32_t num_cells;
+
+    node      = get_page(table->pager, table->root_page_num);
+    num_cells = (*leaf_node_num_cells(node));
+
+    // TODO: remove this 
+    if(num_cells >= LEAF_NODE_MAX_CELLS)
     {
         return EXECUTE_TABLE_FULL;
     }
     
-    Row*    row_to_insert;
-    Cursor* cursor;
+    Row*     row_to_insert;
+    Cursor*  cursor;
+    uint32_t key_to_insert;
 
-    cursor        = table_end(table);
     row_to_insert = &(statement->row_to_insert);
-    serialize_row(row_to_insert, cursor_value(cursor));
-    table->num_rows++;
+    key_to_insert = row_to_insert->id;
+    cursor        = table_find(table, key_to_insert);
+    
+    // Check for duplicates
+    if(cursor->cell_num < num_cells)
+    {
+        uint32_t key_at_index = (*leaf_node_key(node, cursor->cell_num));
+        if(key_at_index == key_to_insert)
+            return EXECUTE_DUPLICATE_KEY;
+    }
+
+    leaf_node_insert(
+            cursor, 
+            row_to_insert->id, 
+            row_to_insert
+    );
 
     free(cursor);
 

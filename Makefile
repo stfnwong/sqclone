@@ -20,7 +20,7 @@ ASM_STYLE=intel
 # TOOLS 
 CC=gcc
 ifeq ($(DEBUG), 1)
-OPT=-O0 -g2
+OPT=-O0 -g3
 endif 
 CFLAGS = -Wall -std=c99 -D_REENTRANT -pthread $(OPT)
 CFLAGS += -D_GNU_SOURCE

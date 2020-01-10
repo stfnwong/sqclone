@@ -5,8 +5,9 @@
 # Ignore *.db files 
 *.db
 
-# Ignore repl binary
+# Ignore output binaries
 repl
+insert
 # Ignore tags files
 tags
 

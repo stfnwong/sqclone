@@ -771,6 +771,61 @@ uint32_t* node_parent(void* node)
 }
 
 /*
+ * indent()
+ */
+void indent(uint32_t level)
+{
+    for(uint32_t l = 0; l < level; ++l)
+        fprintf(stdout, "   ");
+}
+
+/*
+ * print_tree()
+ */
+void print_tree(Pager* pager, uint32_t page_num, uint32_t indent_lvl)
+{
+    void*    node;
+    uint32_t num_keys;
+    uint32_t child;
+
+    node = get_page(pager, page_num);
+    switch(get_node_type(node))
+    {
+        case NODE_LEAF:
+            num_keys = (*leaf_node_num_cells(node));
+            indent(indent_lvl);
+            fprintf(stdout, "- leaf size (%d)\n", num_keys);
+            for(uint32_t i = 0; i < num_keys; ++i)
+            {
+                indent(indent_lvl + 1);
+                fprintf(stdout, "- %d\n", (*leaf_node_key(node, i)));
+            }
+            break;
+
+        case NODE_INTERNAL:
+            num_keys = (*internal_node_num_keys(node));
+            indent(indent_lvl);
+            fprintf(stdout, "- internal size (%d)\n", num_keys);
+
+            // "left" children
+            for(uint32_t i = 0; i < num_keys; ++i)
+            {
+                child = (*internal_node_child(node, i));
+                print_tree(pager, child, indent_lvl + 1);
+                indent(indent_lvl + 1);
+                fprintf(stdout, "- key %d\n", (*internal_node_key(node, i)));
+            }
+
+            // right most child
+            child = (*internal_node_right_child(node));
+            print_tree(pager, child, indent_lvl + 1);
+            break;
+    }
+}
+
+
+
+/*
  * print_info()
  */
 void print_info(void)

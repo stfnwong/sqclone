@@ -215,6 +215,7 @@ void      init_internal_node(void* node);
  */
 uint32_t  get_node_max_key(void* node);
 uint32_t* node_parent(void* node);
+void      print_tree(Pager* pager, uint32_t page_num, uint32_t indent_lvl);
 
 
 // Print leaf node info

@@ -39,7 +39,7 @@ $(OBJECTS): $(OBJ_DIR)/%.o : $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # =============== PROGRAMS 
-PROGRAMS=repl
+PROGRAMS=repl insert
 PROGRAM_SOURCES := $(wildcard $(PROGRAM_DIR)/*.c)
 PROGRAM_OBJECTS := $(PROGRAM_SOURCES:$(PROGRAM_DIR)/%.c=$(OBJ_DIR)/%.o)
 
@@ -78,6 +78,7 @@ programs: $(PROGRAMS)
 clean:
 	rm -rfv *.o $(OBJ_DIR)/*.o 
 	rm -fv bin/test/test_*
+	rm -fv repl
 
 print-%:
 	@echo $* = $($*)

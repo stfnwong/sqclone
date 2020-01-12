@@ -23,9 +23,9 @@
  */
 void print_page_info(void)
 {
-    fprintf(stdout, "ROW_SIZE        : %d\n", ROW_SIZE);
-    fprintf(stdout, "PAGE_SIZE       : %d\n", PAGE_SIZE);
-    fprintf(stdout, "TABLE_MAX_PAGES : %d\n", TABLE_MAX_PAGES);
+    fprintf(stdout, "ROW_SIZE        : %ld\n", ROW_SIZE);
+    fprintf(stdout, "PAGE_SIZE       : %ld\n", PAGE_SIZE);
+    fprintf(stdout, "TABLE_MAX_PAGES : %ld\n", TABLE_MAX_PAGES);
 }
 
 /*
@@ -264,8 +264,6 @@ Table* db_open(const char* filename)
 void db_close(Table* table)
 {
     Pager* pager;
-    uint32_t num_full_pages;
-    uint32_t num_extra_rows;
 
     pager = table->pager;
     for(uint32_t p = 0; p < pager->num_pages; ++p)
@@ -359,7 +357,6 @@ Cursor* table_end(Table* table)
  */
 void* cursor_value(Cursor* cursor)
 {
-    uint32_t page_num;
     void* page;
 
     page = get_page(cursor->table->pager, cursor->page_num);

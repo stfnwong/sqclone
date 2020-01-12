@@ -1,0 +1,9 @@
+# Travis config for SQCLONE
+
+language: c
+sudo: false
+compiler: gcc
+
+script: 
+    - make
+    - ./bin/test/table_spec

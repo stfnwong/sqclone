@@ -23,8 +23,9 @@ ifeq ($(DEBUG), 1)
 OPT=-O0 -g2
 endif 
 CFLAGS = -Wall -std=c99 -D_REENTRANT -pthread $(OPT)
-CFLAGS += -D_GNU_SOURCE
-LDFLAGS=
+# NOTE: added profiling flags here for coverage test
+CFLAGS += -fprofile-arcs -ftest-coverage
+LDFLAGS= -fprofile-arcs
 LIBS=
 TEST_LIBS=-lcheck
 

@@ -20,12 +20,17 @@ ASM_STYLE=intel
 # TOOLS 
 CC=gcc
 ifeq ($(DEBUG), 1)
-OPT=-O0 -g2
+OPT=-O0
 endif 
 CFLAGS = -Wall -std=c99 -D_REENTRANT -pthread $(OPT)
 # NOTE: added profiling flags here for coverage test
+ifeq ($(DEBUG), 1)
 CFLAGS += -fprofile-arcs -ftest-coverage
-LDFLAGS= -fprofile-arcs
+endif
+LDFLAGS=
+ifeq ($(DEBUG), 1)
+LDFLAGS += -fprofile-arcs
+endif
 LIBS=
 TEST_LIBS=-lcheck
 

@@ -60,7 +60,6 @@ spec("table")
         // get a new table
         table = db_open(test_db_name);
         check(table != NULL);
-        check(table->num_rows == 0);
         input_buffer->buffer = inp_valid;
         fprintf(stdout, "[%s] checking table operation with input \n\t[%s]\n",
                 __func__, input_buffer->buffer
@@ -73,11 +72,8 @@ spec("table")
         check(exec_result == EXECUTE_SUCCESS);
 
         // Check the data 
-        check(table->num_rows == 1);
         cursor = table_start(table);
         deserialize_row(cursor_value(cursor), &row);
-
-        fprintf(stdout, "[%s] deserialized row (%d/%d) :\n", __func__, row.id, table->num_rows);
         print_row(&row);
         
         //check(row.id == 1);
@@ -107,7 +103,6 @@ spec("table")
         // Get a table
         table = db_open(test_db_name);
         check(table != NULL);
-        check(table->num_rows == 0);
 
         // Get a buffer for commands
         input_buffer = new_input_buffer();
@@ -144,8 +139,6 @@ spec("table")
         } while(exec_result != EXECUTE_TABLE_FULL);
 
         fprintf(stdout, "[%s] inserted %d rows into table\n", __func__, cur_row);
-        check(table->num_rows == 1300);
-        check(table->max_rows == table->num_rows);
 
         // Any subsequent inserts should fail
         for(int i = 0; i < 128; ++i)
@@ -177,7 +170,6 @@ spec("table")
         // Get a table
         table = db_open(test_db_name);
         check(table != NULL);
-        check(table->num_rows == 0);
 
         // Get a buffer for commands
         input_buffer = new_input_buffer();
@@ -218,7 +210,6 @@ spec("table")
         // Get a table
         table = db_open(test_db_name);
         check(table != NULL);
-        check(table->num_rows == 0);
 
         // Get a buffer for commands
         input_buffer = new_input_buffer();
@@ -261,7 +252,6 @@ spec("table")
         // Get a new table
         table = db_open(test_db_name);
         check(table != NULL);
-        check(table->num_rows == 0);
 
         // Allocate input here to avoid double-free
         input = malloc(sizeof(char) * 256);
@@ -280,7 +270,6 @@ spec("table")
 
         prep_result = prepare_statement(input_buffer, &statement);
         check(prep_result == PREPARE_NEGATIVE_ID);
-        check(table->num_rows == 0);
 
         // Insert some more invalid data
         strcpy(input, "insert -100 user1 user1@domain.net");
@@ -290,7 +279,6 @@ spec("table")
         );
         prep_result = prepare_statement(input_buffer, &statement);
         check(prep_result == PREPARE_NEGATIVE_ID);
-        check(table->num_rows == 0);
 
         // With a valid input it should be fine.
         // Insert some more invalid data
@@ -302,9 +290,6 @@ spec("table")
 
         exec_result = execute_statement(&statement, table);
         check(exec_result == EXECUTE_SUCCESS);
-
-        // Check the data 
-        check(table->num_rows == 1);
 
         close_input_buffer(input_buffer);
         db_close(table);

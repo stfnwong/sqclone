@@ -140,16 +140,6 @@ void    cursor_advance(Cursor* cursor);
 // } CommonNode;
 // 
 // ... and so on..
-/*
- * Common Node Header Layout
- */
-
-// ================ TREE NODES
-typedef enum
-{
-    NODE_INTERNAL,
-    NODE_LEAF
-} NodeType;
 
 #define NODE_TYPE_SIZE           sizeof(uint8_t)
 #define NODE_TYPE_OFFSET         0

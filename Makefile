@@ -32,7 +32,7 @@ ifeq ($(DEBUG), 1)
 LDFLAGS += -fprofile-arcs
 endif
 LIBS=
-TEST_LIBS=-lcheck
+TEST_LIBS=
 
 INCS=-I$(SRC_DIR)
 # Sources

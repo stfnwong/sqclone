@@ -5,5 +5,5 @@ sudo: false
 compiler: gcc
 
 script: 
-    - make
+    - make clean && make all
     - ./bin/test/table_spec
